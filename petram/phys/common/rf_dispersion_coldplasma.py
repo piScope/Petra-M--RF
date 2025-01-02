@@ -97,7 +97,6 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
               'col_model': col_model}
 
     if terms == default_stix_option:
-
         def epsilonr(ptx, B, dens_e, t_e, dens_i):
             e_cold = epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
@@ -173,13 +172,13 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
 def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
                     col_model, g_ns, l_ns, terms=default_stix_option):
 
-    from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
-                                                                   epsilonr_pl_cold_g,
-                                                                   epsilonr_pl_cold,
-                                                                   epsilonr_pl_cold_generic,
-                                                                   f_collisions)
-    from petram.phys.common.rf_plasma_wc_wp import wpesq, wpisq, wce, wci    
-
+    import petram.phys.common as pcomm
+    # from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
+    #                                                               epsilonr_pl_cold_g,
+    #                                                               epsilonr_pl_cold,
+    #                                                               epsilonr_pl_cold_generic,
+    #                                                               f_collisions)
+    #from petram.phys.common.rf_plasma_wc_wp import wpesq, wpisq, wce, wci
 
     Da = 1.66053906660e-27      # atomic mass unit (u or Dalton) (kg)
 
@@ -214,20 +213,24 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
 
     col_model = col_model_options.index(col_model)
     params = {'omega': omega, 'masses': masses,
-              'charges': charges, 'col_model': col_model}
+              'charges': charges, 'col_model': col_model, 'pcomm': pcomm}
 
     if terms == default_stix_option:
         def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold
+
             out = -epsilon0 * omega * omega*epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
             return out
 
         def sdp(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_std
             out = epsilonr_pl_cold_std(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
             return out
 
         def epsilonrac(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold
             out = -epsilon0 * omega * omega*epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
             return (out - out.transpose().conj())/2.0
@@ -238,16 +241,20 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
         params["sterms"] = terms
 
         def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
+
             out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
                 omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
             return out
 
         def sdp(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_g
             out = epsilonr_pl_cold_g(
                 omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
             return out
 
         def epsilonrac(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
             out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
                 omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
             return (out - out.transpose().conj())/2.0
@@ -259,10 +266,14 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
 
     def nuei(*_ptx, dens_e=dens_e, t_e=t_e, dens_i=dens_i):
+        from petram.phys.common.rf_dispersion_coldplasma_numba import f_collisions
+
         nuei = f_collisions(dens_i, charges, t_e, dens_e)
         return nuei
 
     def fce(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+        from petram.phys.common.rf_plasma_wc_wp import wce
+
         freq = omega/2/pi
         b_norm = sqrt(B[0]**2+B[1]**2+B[2]**2)
         fce = wce(b_norm, freq)*omega/2/pi
@@ -270,6 +281,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
 
     def fci(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
         from petram.phys.phys_const import Da
+        from petram.phys.common.rf_plasma_wc_wp import wci
 
         freq = omega/2/pi
         fci = np.zeros(len(masses))
@@ -285,12 +297,15 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
         return fci
 
     def fpe(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+        from petram.phys.common.rf_plasma_wc_wp import wpesq
+
         freq = omega/2/pi
         fpe = sqrt(wpesq(dens_e, freq)*omega**2)/2/pi
         return fpe
 
     def fpi(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
         from petram.phys.phys_const import Da
+        from petram.phys.common.rf_plasma_wc_wp import wpisq
 
         freq = omega/2/pi
         fpi = np.zeros(len(masses))
@@ -304,11 +319,11 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
 
         return fpi
 
-    solvar["B_"+ss] = B_var
-    solvar["ne_"+ss] = dense_var
-    solvar["te_"+ss] = te_var
-    solvar["ni_"+ss] = densi_var
-    dependency = ("B_"+ss, "ne_"+ss, "te_"+ss, "ni_"+ss)
+    solvar["_B_"+ss] = B_var
+    solvar["_ne_"+ss] = dense_var
+    solvar["_te_"+ss] = te_var
+    solvar["_ni_"+ss] = densi_var
+    dependency = ("_B_"+ss, "_ne_"+ss, "_te_"+ss, "_ni_"+ss)
 
     var1 = variable.array(complex=True, shape=(3, 3),
                           dependency=dependency, params=params)(epsilonr)
