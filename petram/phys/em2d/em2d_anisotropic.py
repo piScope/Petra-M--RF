@@ -250,7 +250,7 @@ class EM2D_Anisotropic(EM2D_Domain, EM2D_Domain_helper):
         '''
     def add_domain_variables(self, v, n, suffix, ind_vars):
 
-        from petram.helper.variables import add_expression, add_constant
+        from petram.helper.variables import add_constant
         
         e, m, s, kz = self.vt.make_value_or_expression(self)
 

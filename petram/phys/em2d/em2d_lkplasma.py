@@ -179,7 +179,7 @@ class EM2D_LocalK(EM2D_Domain, EM2D_Domain_helper):
         self.call_mix_add_integrator(eps, mu, engine, mbf, r, c, is_trans)
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
-        from petram.helper.variables import add_expression, add_constant
+        from petram.helper.variables import add_constant
 
         if len(self._sel_index) == 0:
             return

@@ -248,7 +248,7 @@ class EM2D_Vac(EM2D_Domain, EM2D_Domain_helper):
         '''
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
-        from petram.helper.variables import add_expression, add_constant
+        from petram.helper.variables import add_constant
         e, m, s, kz = self.vt.make_value_or_expression(self)
 
         if len(self._sel_index) == 0:
@@ -268,34 +268,3 @@ class EM2D_Vac(EM2D_Domain, EM2D_Domain_helper):
                      domains=self._sel_index,
                      gdomain=self._global_ns)
 
-        '''
-        var, f_name = self.eval_phys_expr(self.epsilonr, 'epsilonr')
-        if callable(var):
-            add_expression(v, 'epsilonr', suffix, ind_vars, f_name,
-           n                [], domains = self._sel_index, 
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'epsilonr', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)
-
-        var, f_name = self.eval_phys_expr(self.mur, 'mur')
-        if callable(var):
-            add_expression(v, 'mur', suffix, ind_vars, f_name,
-                           [], domains = self._sel_index,
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'mur', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)                        
-
-        var, f_name = self.eval_phys_expr(self.sigma, 'sigma')
-        if callable(var):
-            add_expression(v, 'sigma', suffix, ind_vars, f_name,
-                           [], domains = self._sel_index, 
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'sigma', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)
-        '''

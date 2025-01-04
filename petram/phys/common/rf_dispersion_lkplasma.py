@@ -511,8 +511,6 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
 
 
 def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
-    from petram.helper.variables import add_expression, add_constant
-
     ss = obj.parent.parent.name()+'_'+obj.name()  # phys module name + name
 
     v["_e_"+ss] = ret[0]
@@ -541,22 +539,38 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'EPSstix', ["_spdhot_"+ss],)
 
-    add_expression(v, 'Pcol', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0", ['E', 'epsilonrac', 'omega'])
-    add_expression(v, 'Pabse', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrae.dot(E))/1j*e0", ['E', 'epsilonrae', 'omega'])
-    add_expression(v, 'Pabsi1', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrai[0].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
-    add_expression(v, 'Pabsi2', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrai[1].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
-    add_expression(v, 'Pabsi3', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pcol",
+                           "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0",
+                           vars=['E', 'epsilonrac', 'omega'],)
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabse",
+                           "omega*conj(E).dot(epsilonrae.dot(E))/1j*e0",
+                           vars=['E', 'epsilonrae', 'omega'],)
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi1",
+                           "omega*conj(E).dot(epsilonrai[0].dot(E))/1j*e0",
+                           vars=['E', 'epsilonrai', 'omega'],)
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi2",
+                           "omega*conj(E).dot(epsilonrai[1].dot(E))/1j*e0",
+                           vars=['E', 'epsilonrai', 'omega'],)
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi3",
+                           "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0",
+                           vars=['E', 'epsilonrai', 'omega'],)
+
+    # add_expression(v, 'Pcol', suffix, ind_vars,
+    #               "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0", ['E', 'epsilonrac', 'omega'])
+    # add_expression(v, 'Pabse', suffix, ind_vars,
+    #               "omega*conj(E).dot(epsilonrae.dot(E))/1j*e0", ['E', 'epsilonrae', 'omega'])
+    # add_expression(v, 'Pabsi1', suffix, ind_vars,
+    #               "omega*conj(E).dot(epsilonrai[0].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
+    # add_expression(v, 'Pabsi2', suffix, ind_vars,
+    #               "omega*conj(E).dot(epsilonrai[1].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
+    # add_expression(v, 'Pabsi3', suffix, ind_vars,
+    #              "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'Nrfr', ["_nref_"+ss])
 
-    add_expression(v, 'fce', suffix, ind_vars, "_fce_"+ss, [])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'fce', "_fce_"+ss)
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'fci', ["_fci_"+ss])
-    add_expression(v, 'fpe', suffix, ind_vars, "_fpe_"+ss, [])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'fpe', "_fpe_"+ss)
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'fpi', ["_fpi_"+ss])
 
     obj.do_add_matrix_expr(v, suffix, ind_vars,

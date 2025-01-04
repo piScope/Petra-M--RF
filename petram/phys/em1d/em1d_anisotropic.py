@@ -247,8 +247,7 @@ class EM1D_Anisotropic(EM1D_Vac):
 
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
-        from petram.helper.variables import add_expression, add_constant
-        from petram.helper.variables import NativeCoefficientGenBase
+        from petram.helper.variables import add_constant
         
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
         

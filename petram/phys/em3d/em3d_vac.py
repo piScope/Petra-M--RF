@@ -116,8 +116,7 @@ class EM3D_Vac(EM3D_Domain):
                             mfem.VectorFEMassIntegrator)
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
-        from petram.helper.variables import add_expression, add_constant
-        from petram.helper.variables import NativeCoefficientGenBase
+        from petram.helper.variables import add_constant
 
         if len(self._sel_index) == 0:
             return
@@ -134,20 +133,3 @@ class EM3D_Vac(EM3D_Domain):
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'mur')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'sigma')
 
-        '''
-        def add_sigma_epsilonr_mur(name, f_name):
-            if isinstance(f_name, NativeCoefficientGenBase):
-                pass   
-            elif isinstance(f_name, str):      
-                add_expression(v, name, suffix, ind_vars, f_name,
-                           [], domains = self._sel_index, 
-                           gdomain = self._global_ns)            
-            else:
-                add_constant(v, name, suffix, f_name,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)
-
-        add_sigma_epsilonr_mur('epsilonr', e)
-        add_sigma_epsilonr_mur('mur', m)
-        add_sigma_epsilonr_mur('sigma', s)                           
-        '''

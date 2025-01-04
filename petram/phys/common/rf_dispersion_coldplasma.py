@@ -350,8 +350,6 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
 
 
 def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
-    from petram.helper.variables import add_expression, add_constant
-
     ss = obj.parent.parent.name()+'_' + obj.name()  # phys module name + name
 
     v["_e_"+ss] = ret[0]
@@ -370,12 +368,13 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'epsilonrac', [
         "_eac_"+ss + "/(-omega*omega*e0)"], ["omega"])
 
-    add_expression(v, 'Pcol', suffix, ind_vars,
-                   "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0", ['E', 'epsilonrac', 'omega'])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pcol",
+                           "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0",
+                           vars=['E', 'epsilonrac', 'omega'],)
 
-    add_expression(v, 'fce', suffix, ind_vars, "_fce_"+ss, [])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'fce', "_fce_"+ss)
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'fci', ["_fci_"+ss])
-    add_expression(v, 'fpe', suffix, ind_vars, "_fpe_"+ss, [])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'fpe', "_fpe_"+ss)
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'fpi', ["_fpi_"+ss])
 
     obj.do_add_matrix_expr(v, suffix, ind_vars,

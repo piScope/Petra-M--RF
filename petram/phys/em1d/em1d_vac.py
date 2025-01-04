@@ -258,8 +258,7 @@ class EM1D_Vac(EM1D_Domain):
                             mbf.AddDomainIntegrator, itg)
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
-        from petram.helper.variables import add_expression, add_constant
-        from petram.helper.variables import NativeCoefficientGenBase
+        from petram.helper.variables import add_constant
 
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
 
