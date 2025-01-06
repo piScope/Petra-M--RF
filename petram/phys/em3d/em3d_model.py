@@ -43,14 +43,6 @@ from petram.phys.phys_model import Phys, PhysModule
 from petram.phys.em3d.em3d_base import EM3D_Bdry
 from petram.phys.em3d.em3d_vac import EM3D_Vac
 
-txt_predefined = 'freq, e0, mu0'
-
-
-data2 = (('label1', VtableElement(None,
-                                  guilabel='Default Bdry (PMC)',
-                                  default="Ht = 0",
-                                  tip="this is a natural BC")),)
-
 
 class EM3D_DefDomain(EM3D_Vac):
     can_delete = False
@@ -66,7 +58,7 @@ class EM3D_DefDomain(EM3D_Vac):
         return [['Default Domain (Vac)',   "eps_r=1, mu_r=1, sigma=0",  2, {}], ]
 
     def get_panel1_value(self):
-        return None
+        return ["eps_r=1, mu_r=1, sigma=0", ]
 
     def import_panel1_value(self, v):
         pass
@@ -79,6 +71,12 @@ class EM3D_DefDomain(EM3D_Vac):
 
     def get_possible_child(self):
         return self.parent.get_possible_domain()
+
+
+data2 = (('label1', VtableElement(None,
+                                  guilabel='Default Bdry (PMC)',
+                                  default="Ht = 0",
+                                  tip="this is a natural BC")),)
 
 
 class EM3D_DefBdry(EM3D_Bdry):
@@ -216,8 +214,8 @@ class EM3D(PhysModule):
                        ["independent vars.", self.ind_vars, 0, {}],
                        a,
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["derived vars.", ','.join(EM3D.der_var_base), 2, {}],
-                       ["predefined ns vars.", txt_predefined, 2, {}]])
+                       ["derived vars.", ','.join(EM3D.der_var_base), 2, {}], ])
+
         return panels
 
     def get_panel1_value(self):
@@ -226,11 +224,15 @@ class EM3D(PhysModule):
         val = super(EM3D, self).get_panel1_value()
         val.extend([self.freq_txt,
                     self.ind_vars, self.dep_vars_suffix,
-                    names, names2, txt_predefined])
+                    names, names2, ])
         return val
 
+    """                  
     def attribute_expr(self):
         return ["freq"], [float]
+    def attribute_mirror_ns(self):
+        return ['freq']
+    """
 
     def get_default_ns(self):
         from petram.phys.phys_const import mu0, epsilon0, q0
@@ -239,17 +241,14 @@ class EM3D(PhysModule):
               'q0': q0}
         return ns
 
-    def attribute_mirror_ns(self):
-        return ['freq']
-
     def import_panel1_value(self, v):
         v = super(EM3D, self).import_panel1_value(v)
         self.freq_txt = str(v[0])
         self.ind_vars = str(v[1])
         self.dep_vars_suffix = str(v[2])
-        from petram.phys.em3d.em3d_const import mu0, epsilon0
-        self._global_ns['mu0'] = mu0
-        self._global_ns['epsilon0'] = epsilon0
+        #from petram.phys.em3d.em3d_const import mu0, epsilon0
+        #self._global_ns['mu0'] = mu0
+        #self._global_ns['epsilon0'] = epsilon0
 
     def get_possible_bdry(self):
         if EM3D._possible_constraints is None:
@@ -315,7 +314,13 @@ class EM3D(PhysModule):
         return True
 
     def get_freq_omega(self):
-        return self._global_ns['freq'], 2.*np.pi*self._global_ns['freq']
+        freq, _void = self.eval_param_expr(self.freq_txt, "freq")
+        try:
+            _void = float(freq)
+        except:
+            freq = 1e6
+            dprint1("Error, frequency must be a scalr real value")
+        return freq, 2.*np.pi*freq
 
     def add_variables(self, v, name, solr, soli=None):
         from petram.helper.variables import add_coordinates
@@ -347,12 +352,14 @@ class EM3D(PhysModule):
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)
 
+        from petram.phys.phys_const import mu0, epsilon0, q0
+
         if name.startswith('E'):
             freq, omega = self.get_freq_omega()
             add_constant(v, 'freq', suffix, freq)
             add_constant(v, 'omega', suffix, np.float64(omega))
-            add_constant(v, 'mu0', '', self._global_ns['mu0'])
-            add_constant(v, 'e0', '', self._global_ns['e0'])
+            #add_constant(v, 'mu0', '', mu0)
+            #add_constant(v, 'e0', '', epsilon0)
 
             add_components(v, 'E', suffix, ind_vars, solr, soli)
             add_components(v, 'B', suffix, ind_vars, solr, soli,
