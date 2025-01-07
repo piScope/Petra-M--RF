@@ -268,7 +268,13 @@ class EM2Da(PhysModule):
         return True
 
     def get_freq_omega(self):
-        return self._global_ns['freq'], 2.*np.pi*self._global_ns['freq']
+        freq, _void = self.eval_param_expr(self.freq_txt, "freq")
+        try:
+            _void = float(freq)
+        except:
+            freq = 1e6
+            dprint1("Error, frequency must be a scalr real value")
+        return freq, 2.*np.pi*freq
 
     def add_variables(self, v, name, solr, soli=None):
         from petram.helper.variables import add_coordinates
