@@ -187,7 +187,7 @@ class EM1D(PhysModule):
     def attribute_set(self, v):
         v = super(EM1D, self).attribute_set(v)
         v["element"] = 'L2_FECollection, H1_FECollection, H1_FECollection'
-        v["freq_txt"] = 1.0e9
+        v["freq_txt"] = '1.0e9'
         v["ndim"] = 1
         v["ind_vars"] = 'x'
         v["dep_vars_suffix"] = ''

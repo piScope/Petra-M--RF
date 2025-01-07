@@ -193,7 +193,7 @@ class EM2D(PhysModule):
     def attribute_set(self, v):
         v = super(EM2D, self).attribute_set(v)
         v["element"] = 'ND_FECollection, H1_FECollection'
-        v["freq_txt"] = 1.0e9
+        v["freq_txt"] = "1.0e9"
         v["ndim"] = 2
         v["ind_vars"] = 'x, y'
         v["dep_vars_suffix"] = ''

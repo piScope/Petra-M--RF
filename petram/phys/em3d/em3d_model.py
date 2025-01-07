@@ -201,7 +201,7 @@ class EM3D(PhysModule):
     def attribute_set(self, v):
         v = super(EM3D, self).attribute_set(v)
         v["element"] = 'ND_FECollection'
-        v["freq_txt"] = 1.0e9
+        v["freq_txt"] = "1.0e9"
         v["ndim"] = 3
         v["ind_vars"] = 'x, y, z'
         v["dep_vars_suffix"] = ''

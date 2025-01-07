@@ -190,7 +190,7 @@ class EM2Da(PhysModule):
     def attribute_set(self, v):
         v = super(EM2Da, self).attribute_set(v)
         v["element"] = 'ND_FECollection, H1_FECollection'
-        v["freq_txt"] = 1.0e9
+        v["freq_txt"] = '1.0e9'
         v["ndim"] = 2
         v["ind_vars"] = 'r, z'
         v["dep_vars_suffix"] = ''
