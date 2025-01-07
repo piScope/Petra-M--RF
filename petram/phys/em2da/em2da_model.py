@@ -202,13 +202,13 @@ class EM2Da(PhysModule):
                        ["independent vars.", self.ind_vars, 0, {}],
                        ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["derived vars.", ','.join(EM2Da.der_vars_base), 2, {}], ])
+                       ["ns vars.", ','.join(EM2Da.der_vars_base), 2, {}], ])
 
         return panels
 
     def get_panel1_value(self):
         names = ', '.join([x for x in self.dep_vars])
-        names2 = ', '.join(self.get_dependent_variables())
+        names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM2Da, self).get_panel1_value()
         val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
                     names, names2, ])
@@ -233,10 +233,6 @@ class EM2Da(PhysModule):
         self.freq_txt = str(v[0])
         self.ind_vars = str(v[1])
         self.dep_vars_suffix = str(v[2])
-
-        from .em2da_const import mu0, epsilon0
-        self._global_ns['mu0'] = mu0
-        self._global_ns['epsilon0'] = epsilon0
 
     def get_possible_domain(self):
         if EM2Da._possible_constraints is None:
@@ -299,13 +295,9 @@ class EM2Da(PhysModule):
         ind_vars = [x.strip() for x in self.ind_vars.split(',')]
         suffix = self.dep_vars_suffix
 
-        from petram.helper.variables import TestVariable
-        #v['debug_test'] =  TestVariable()
         freq, omega = self.get_freq_omega()
         add_constant(v, 'omega', suffix, np.float64(omega),)
         add_constant(v, 'freq', suffix, np.float64(freq),)
-        #add_constant(v, 'mu0', '', self._global_ns['mu0'])
-        #add_constant(v, 'e0', '', self._global_ns['e0'])
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)

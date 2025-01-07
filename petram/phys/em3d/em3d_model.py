@@ -214,13 +214,13 @@ class EM3D(PhysModule):
                        ["independent vars.", self.ind_vars, 0, {}],
                        a,
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["derived vars.", ','.join(EM3D.der_var_base), 2, {}], ])
+                       ["ns vars.", ','.join(EM3D.der_var_base), 2, {}], ])
 
         return panels
 
     def get_panel1_value(self):
         names = ', '.join(self.dep_vars)
-        names2 = ', '.join(self.get_dependent_variables())
+        names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM3D, self).get_panel1_value()
         val.extend([self.freq_txt,
                     self.ind_vars, self.dep_vars_suffix,
@@ -333,10 +333,12 @@ class EM3D(PhysModule):
 
         from petram.helper.eval_deriv import eval_curl
 
+        freq, omega = self.get_freq_omega()
+
         def evalB(gfr, gfi=None):
             gfr, gfi, extra = eval_curl(gfr, gfi)
-            gfi /= (2*self.freq*np.pi)   # real B
-            gfr /= -(2*self.freq*np.pi)  # imag B
+            gfi /= omega   # real B
+            gfr /= -omega  # imag B
             # flipping gfi and gfr so that it returns
             # -i * (-gfr + i gfi) = gfi + i gfr
             return gfi, gfr, extra

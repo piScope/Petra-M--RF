@@ -200,13 +200,13 @@ class EM1D(PhysModule):
                        ["independent vars.", self.ind_vars, 0, {}],
                        ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["derived vars.", ','.join(self.der_vars), 2, {}],
+                       ["ns vars.", ','.join(self.der_vars), 2, {}],
                        ["use H1 for Ex", self.use_h1_x, 3, {"text": ' '}], ])
         return panels
 
     def get_panel1_value(self):
         names = ','.join([x for x in self.dep_vars])
-        names2 = ','.join([x for x in self.der_vars])
+        names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM1D, self).get_panel1_value()
         val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
                     names, names2, self.use_h1_x])
@@ -237,10 +237,6 @@ class EM1D(PhysModule):
             self.element = 'H1_FECollection, H1_FECollection, H1_FECollection'
         else:
             self.element = 'L2_FECollection, H1_FECollection, H1_FECollection'
-        from petram.phys.em1d.em1d_const import mu0, epsilon0
-
-        self._global_ns['mu0'] = mu0
-        self._global_ns['epsilon0'] = epsilon0
 
     def get_possible_domain(self):
         if EM1D._possible_constraints is None:
@@ -296,8 +292,6 @@ class EM1D(PhysModule):
         freq, omega = self.get_freq_omega()
         add_constant(v, 'omega', suffix, np.float64(omega),)
         add_constant(v, 'freq', suffix, np.float64(freq),)
-        #add_constant(v, 'mu0', '', self._global_ns['mu0'])
-        #add_constant(v, 'e0', '', self._global_ns['e0'])
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)
