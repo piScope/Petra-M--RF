@@ -52,26 +52,11 @@ class EM3D_Domain(Domain, Phys):
         from .em3d_pml import EM3D_PML
         return [obj for obj in self.walk() if isinstance(obj, EM3D_PML) and obj.enabled]
     
-    def make_PML_epsilon(self, coeff1):
+    def make_PML_coeff(self, coeff):
         pmls = self.get_pml()
         if len(pmls) > 2: assert False, "Multiple PML is set"
-        
-        coeff1 = pmls[0].make_PML_epsilon(coeff1)
+        coeff1 = pmls[0].make_PML_coeff(coeff)
         return coeff1
-    
-    def make_PML_invmu(self, coeff1):
-        pmls = self.get_pml()
-        if len(pmls) > 2: assert False, "Multiple PML is set"
-        
-        coeff1 = pmls[0].make_PML_invmu(coeff1)
-        return coeff1
-    
-    def make_PML_sigma(self, coeff1):
-        pmls = self.get_pml()
-        if len(pmls) > 2: assert False, "Multiple PML is set"
-        
-        coeff1 = pmls[0].make_PML_sigma(coeff1)
-        return coeff1          
 
 class EM3D_Bdry(Bdry, Phys):
     has_3rd_panel = True        

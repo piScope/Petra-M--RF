@@ -14,6 +14,8 @@ data =  (('label1', VtableElement(None,
                                   default =   "Et = 0",
                                   tip = "Essential Homogenous BC" )),)
 
+def bdry_constraints():
+   return [EM2Da_PEC]
 
 class EM2Da_PEC(EM2Da_Bdry):
     has_essential = True

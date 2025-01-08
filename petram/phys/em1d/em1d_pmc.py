@@ -5,6 +5,8 @@ data =  (('label1', VtableElement(None,
                                   guilabel = 'Perfect Magnetic Conductor',
                                   default =   "Hx = 0; Hy = 0",
                                   tip = "this is a natural BC" )),)
+def bdry_constraints():
+   return [EM1D_PMC]
 
 class EM1D_PMC(EM1D_Bdry):
     is_essential = False

@@ -134,6 +134,9 @@ class ImpedanceByZ(mfem.PyCoefficient):
        else:
            return gamma.imag          
 
+def bdry_constraints():
+   return [EM2D_Impedance]
+        
 class EM2D_Impedance(EM2D_Bdry):
     is_essential = False
     vt  = Vtable(data3)

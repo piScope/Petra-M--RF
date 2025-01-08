@@ -34,6 +34,7 @@ EM3D : Frequency domain Maxwell equation.
   Pair:
      EM3D_Floquet     : Periodic boundary condition
 '''
+from petram.phys.vtable import VtableElement, Vtable
 import numpy as np
 import traceback
 
@@ -42,47 +43,54 @@ from petram.phys.phys_model import Phys, PhysModule
 from petram.phys.em3d.em3d_base import EM3D_Bdry
 from petram.phys.em3d.em3d_vac import EM3D_Vac
 
-txt_predefined = 'freq, e0, mu0'
 
-from petram.phys.vtable import VtableElement, Vtable
-
-data2 =  (('label1', VtableElement(None, 
-                                     guilabel = 'Default Bdry (PMC)',
-                                     default =   "Ht = 0",
-                                     tip = "this is a natural BC" )),)
 class EM3D_DefDomain(EM3D_Vac):
     can_delete = False
     nlterms = []
     #vt  = Vtable(data1)
-    #do not use vtable here, since we want to use
-    #vtable defined in EM3D_Vac in add_bf_conttribution
-    
+    # do not use vtable here, since we want to use
+    # vtable defined in EM3D_Vac in add_bf_conttribution
+
     def __init__(self, **kwargs):
         super(EM3D_DefDomain, self).__init__(**kwargs)
+
     def panel1_param(self):
-        return [['Default Domain (Vac)',   "eps_r=1, mu_r=1, sigma=0",  2, {}],]
+        return [['Default Domain (Vac)',   "eps_r=1, mu_r=1, sigma=0",  2, {}], ]
+
     def get_panel1_value(self):
-        return None
+        return ["eps_r=1, mu_r=1, sigma=0", ]
+
     def import_panel1_value(self, v):
         pass
+
     def panel1_tip(self):
         return None
+
     def get_possible_domain(self):
         return []
+
     def get_possible_child(self):
         return self.parent.get_possible_domain()
-        
+
+
+data2 = (('label1', VtableElement(None,
+                                  guilabel='Default Bdry (PMC)',
+                                  default="Ht = 0",
+                                  tip="this is a natural BC")),)
+
+
 class EM3D_DefBdry(EM3D_Bdry):
     can_delete = False
     is_essential = False
-    nlterms = []          
-    vt  = Vtable(data2)                    
+    nlterms = []
+    vt = Vtable(data2)
+
     def __init__(self, **kwargs):
         super(EM3D_DefBdry, self).__init__(**kwargs)
         Phys.__init__(self)
 
     def attribute_set(self, v):
-        super(EM3D_DefBdry, self).attribute_set(v)        
+        super(EM3D_DefBdry, self).attribute_set(v)
         v['sel_readonly'] = False
         v['sel_index'] = ['remaining']
         return v
@@ -99,16 +107,19 @@ class EM3D_DefBdry(EM3D_Bdry):
     def panel1_tip(self):
         return None
     '''
+
     def get_possible_bdry(self):
-        return []                
+        return []
+
 
 class EM3D_DefPair(Pair, Phys):
     can_delete = False
     is_essential = False
+
     def __init__(self, **kwargs):
         super(EM3D_DefPair, self).__init__(**kwargs)
         Phys.__init__(self)
-        
+
     def attribute_set(self, v):
         super(EM3D_DefPair, self).attribute_set(v)
         v['sel_readonly'] = False
@@ -118,17 +129,19 @@ class EM3D_DefPair(Pair, Phys):
     def get_possible_pair(self):
         return []
 
+
 class EM3D(PhysModule):
     der_var_base = ['Bx', 'By', 'Bz']
     der_var_vec = ['B']
     geom_dim = 3
+
     def __init__(self, **kwargs):
         super(EM3D, self).__init__()
         Phys.__init__(self)
         self['Domain'] = EM3D_DefDomain()
         self['Boundary'] = EM3D_DefBdry()
         self['Pair'] = EM3D_DefPair()
-        
+
     @property
     def dep_vars(self):
         '''
@@ -138,11 +151,11 @@ class EM3D(PhysModule):
         '''
         ret = ['E']
         if self._has_div_constraint():
-            ret =['E', 'psi']
+            ret = ['E', 'psi']
         else:
             ret = ['E']
         return [x + self.dep_vars_suffix for x in ret]
-    
+
     @property
     def dep_vars0(self):
         '''
@@ -152,16 +165,16 @@ class EM3D(PhysModule):
         '''
         ret = ['E']
         if self._has_div_constraint():
-            ret =['E', 'psi']
+            ret = ['E', 'psi']
         else:
             ret = ['E']
         return [x + self.dep_vars_suffix for x in ret]
-    
-    @property 
+
+    @property
     def dep_vars_base(self):
         ret = ['E']
         if self._has_div_constraint():
-            ret =['E', 'psi']
+            ret = ['E', 'psi']
         else:
             ret = ['E']
         return ret
@@ -169,72 +182,88 @@ class EM3D(PhysModule):
     def get_fec_type(self, idx):
         values = ['ND', 'H1']
         return values[idx]
-    
+
     def get_fec(self):
         v = self.dep_vars
         if len(v) == 1:  # normal case
             return [(v[0], 'ND_FECollection')]
         else:            # with divergence constraints
             return [(v[0], 'ND_FECollection'),
-                    (v[1], 'H1_FECollection'),]
-    
+                    (v[1], 'H1_FECollection'), ]
+
     def _has_div_constraint(self):
         from petram.phys.em3d.em3d_div import EM3D_Div
         for mm in self['Domain'].iter_enabled():
-            if isinstance(mm, EM3D_Div): return True
+            if isinstance(mm, EM3D_Div):
+                return True
         return False
-        
+
     def attribute_set(self, v):
         v = super(EM3D, self).attribute_set(v)
         v["element"] = 'ND_FECollection'
-        v["freq_txt"]    = 1.0e9
+        v["freq_txt"] = "1.0e9"
         v["ndim"] = 3
         v["ind_vars"] = 'x, y, z'
         v["dep_vars_suffix"] = ''
         return v
-    
+
     def panel1_param(self):
         panels = super(EM3D, self).panel1_param()
-        a, b = self.get_var_suffix_var_name_panel()        
+        a, b = self.get_var_suffix_var_name_panel()
         panels.extend([self.make_param_panel('freq',  self.freq_txt),
-                ["indpendent vars.", self.ind_vars, 0, {}],
-                a,
-                ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                ["derived vars.", ','.join(EM3D.der_var_base), 2, {}],
-                ["predefined ns vars.", txt_predefined , 2, {}]])
+                       ["independent vars.", self.ind_vars, 0, {}],
+                       a,
+                       ["dep. vars.", ','.join(self.dep_vars), 2, {}],
+                       ["ns vars.", ','.join(EM3D.der_var_base), 2, {}], ])
+
         return panels
-      
+
     def get_panel1_value(self):
-        names  = ', '.join(self.dep_vars)
-        names2 = ', '.join(self.get_dependent_variables())
-        val =  super(EM3D, self).get_panel1_value()
+        names = ', '.join(self.dep_vars)
+        names2 = ', '.join(list(self.get_default_ns()))
+        val = super(EM3D, self).get_panel1_value()
         val.extend([self.freq_txt,
                     self.ind_vars, self.dep_vars_suffix,
-                    names, names2, txt_predefined])
-        return val   
-    
+                    names, names2, ])
+        return val
+
+    """                  
     def attribute_expr(self):
         return ["freq"], [float]
-    
-    def get_default_ns(self):
-        from petram.phys.em3d.em3d_const import mu0, epsilon0, q0
-        ns =  {'mu0': mu0,
-               'e0': epsilon0,
-               'q0': q0}
-        return ns
-    
     def attribute_mirror_ns(self):
         return ['freq']
-    
+    """
+
+    def get_default_ns(self):
+        from petram.phys.phys_const import mu0, epsilon0, q0
+        ns = {'mu0': mu0,
+              'e0': epsilon0,
+              'q0': q0}
+        return ns
+
     def import_panel1_value(self, v):
         v = super(EM3D, self).import_panel1_value(v)
-        self.freq_txt =  str(v[0])
-        self.ind_vars =  str(v[1])
-        self.dep_vars_suffix =  str(v[2])                
-        from petram.phys.em3d.em3d_const import mu0, epsilon0
-        self._global_ns['mu0'] = mu0
-        self._global_ns['epsilon0'] = epsilon0
-            
+        self.freq_txt = str(v[0])
+        self.ind_vars = str(v[1])
+        self.dep_vars_suffix = str(v[2])
+        #from petram.phys.em3d.em3d_const import mu0, epsilon0
+        #self._global_ns['mu0'] = mu0
+        #self._global_ns['epsilon0'] = epsilon0
+
+    def get_possible_bdry(self):
+        if EM3D._possible_constraints is None:
+            self._set_possible_constraints('em3d')
+        bdrs = super(EM3D, self).get_possible_bdry()
+        return EM3D._possible_constraints['bdry'] + bdrs
+
+    def get_possible_domain(self):
+        if EM3D._possible_constraints is None:
+            self._set_possible_constraints('em3d')
+
+        doms = super(EM3D, self).get_possible_domain()
+        return EM3D._possible_constraints['domain'] + doms
+
+    '''
     def get_possible_bdry(self):
         from .em3d_pec         import EM3D_PEC
         from .em3d_pmc         import EM3D_PMC
@@ -258,118 +287,152 @@ class EM3D(PhysModule):
         doms = super(EM3D, self).get_possible_domain()
         
         return [EM3D_Vac, EM3D_Anisotropic, EM3D_ExtJ, EM3D_Div] + doms
+    '''
 
     def get_possible_edge(self):
-        return []                
+        return []
 
+    '''
     def get_possible_pair(self):
 
         from .em3d_floquet     import EM3D_Floquet
 
         return [EM3D_Floquet]
     '''
+
+    def get_possible_pair(self):
+        if EM3D._possible_constraints is None:
+            self._set_possible_constraints()
+        return EM3D._possible_constraints['pair']
+
+    '''
     def get_possible_point(self):
         return []
     '''
+
     def is_complex(self):
         return True
 
     def get_freq_omega(self):
-        return self._global_ns['freq'], 2.*np.pi*self._global_ns['freq']
+        freq, _void = self.eval_param_expr(self.freq_txt, "freq")
+        try:
+            _void = float(freq)
+        except:
+            freq = 1e6
+            dprint1("Error, frequency must be a scalr real value")
+        return freq, 2.*np.pi*freq
 
-    def add_variables(self, v, name, solr, soli = None):
+    def add_variables(self, v, name, solr, soli=None):
         from petram.helper.variables import add_coordinates
         from petram.helper.variables import add_scalar
         from petram.helper.variables import add_components
         from petram.helper.variables import add_component_expression as addc_expression
         from petram.helper.variables import add_expression
         from petram.helper.variables import add_surf_normals
-        from petram.helper.variables import add_constant      
-        
-        from petram.helper.eval_deriv import eval_curl        
-        def evalB(gfr, gfi = None):
+        from petram.helper.variables import add_constant
+
+        from petram.helper.eval_deriv import eval_curl
+
+        freq, omega = self.get_freq_omega()
+
+        def evalB(gfr, gfi=None):
             gfr, gfi, extra = eval_curl(gfr, gfi)
-            gfi /= (2*self.freq*np.pi)   # real B
-            gfr /= -(2*self.freq*np.pi)  # imag B
+            gfi /= omega   # real B
+            gfr /= -omega  # imag B
             # flipping gfi and gfr so that it returns
             # -i * (-gfr + i gfi) = gfi + i gfr
-            return gfi, gfr, extra       
+            return gfi, gfr, extra
 
-        ind_vars = [x.strip() for x in self.ind_vars.split(',') if x.strip() != '']
-        
+        ind_vars = [x.strip()
+                    for x in self.ind_vars.split(',') if x.strip() != '']
+
         suffix = self.dep_vars_suffix
 
         from petram.helper.variables import TestVariable
         #v['debug_test'] =  TestVariable()
-        
-        add_coordinates(v, ind_vars)        
+
+        add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)
-        
+
+        from petram.phys.phys_const import mu0, epsilon0, q0
+
         if name.startswith('E'):
-            add_constant(v, 'freq', suffix, self._global_ns['freq'])
-            add_constant(v, 'mu0', '', self._global_ns['mu0'])
-            add_constant(v, 'e0', '', self._global_ns['e0'])
-                           
+            freq, omega = self.get_freq_omega()
+            add_constant(v, 'freq', suffix, freq)
+            add_constant(v, 'omega', suffix, np.float64(omega))
+            #add_constant(v, 'mu0', '', mu0)
+            #add_constant(v, 'e0', '', epsilon0)
+
             add_components(v, 'E', suffix, ind_vars, solr, soli)
             add_components(v, 'B', suffix, ind_vars, solr, soli,
                            deriv=evalB)
             add_expression(v, 'normE', suffix, ind_vars,
                            '(conj(Ex)*Ex + conj(Ey)*Ey +conj(Ez)*Ez)**(0.5)',
                            ['E'])
-            
+
             add_expression(v, 'normB', suffix, ind_vars,
                            '(conj(Bx)*Bx + conj(By)*By + conj(Bz)*Bz)**(0.5)',
                            ['B'])
 
             # Poynting Flux
             addc_expression(v, 'Poy', suffix, ind_vars,
-                           '(conj(Ey)*Bz - conj(Ez)*By)/mu0',
+                            '(conj(Ey)*Bz - conj(Ez)*By)/mu0',
                             ['B', 'E'], 0)
             addc_expression(v, 'Poy', suffix, ind_vars,
-                           '(conj(Ez)*Bx - conj(Ex)*Bz)/mu0',
+                            '(conj(Ez)*Bx - conj(Ex)*Bz)/mu0',
                             ['B', 'E'], 1)
             addc_expression(v, 'Poy', suffix, ind_vars,
-                           '(conj(Ex)*By - conj(Ey)*Bx)/mu0',
+                            '(conj(Ex)*By - conj(Ey)*Bx)/mu0',
                             ['B', 'E'], 2)
 
             #e = - epsion * w^2 - i * sigma * w
             # Jd : displacement current  = -i omega* e0 er E
             addc_expression(v, 'Jd', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[0]',
+                            '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[0]',
                             ['epsilonr', 'E', 'freq'],  0)
             addc_expression(v, 'Jd', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[1]',
+                            '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[1]',
                             ['epsilonr', 'E', 'freq'], 1)
             addc_expression(v, 'Jd', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[2]',
+                            '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[2]',
                             ['epsilonr', 'E', 'freq'], 2)
             # Ji : induced current = sigma *E
             addc_expression(v, 'Ji', suffix, ind_vars,
-                           '(dot(sigma, E))[0]',
+                            '(dot(sigma, E))[0]',
                             ['sigma', 'E'], 0)
             addc_expression(v, 'Ji', suffix, ind_vars,
-                           '(dot(sigma, E))[1]',
+                            '(dot(sigma, E))[1]',
                             ['sigma', 'E'], 1)
             addc_expression(v, 'Ji', suffix, ind_vars,
-                           '(dot(sigma, E))[2]',
+                            '(dot(sigma, E))[2]',
                             ['sigma', 'E'], 2)
             # Jp : polarization current (Jp = -i omega* e0 (er - 1) E
             addc_expression(v, 'Jp', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[0]',
+                            '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[0]',
                             ['epsilonr', 'E', 'freq'], 0)
             addc_expression(v, 'Jp', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[1]',
+                            '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[1]',
                             ['epsilonr', 'E', 'freq'], 1)
             addc_expression(v, 'Jp', suffix, ind_vars,
-                           '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[2]',
+                            '(-1j*(dot(epsilonr, E) - E)*freq*2*pi*e0)[2]',
                             ['epsilonr', 'E', 'freq'], 2)
-            
-            
+
+            # Js : surface current (n x B / mu)
+            addc_expression(v, 'Js', suffix, ind_vars,
+                            '(cross([nx, ny, nz], inv(mur).dot(B))/mu0)[0]',
+                            ['nx', 'ny', 'nz', 'B', 'mur', 'mu0'], 0)
+            addc_expression(v, 'Js', suffix, ind_vars,
+                            '(cross([nx, ny, nz], inv(mur).dot(B))/mu0)[1]',
+                            ['nx', 'ny', 'nz', 'B', 'mur', 'mu0'], 1)
+            addc_expression(v, 'Js', suffix, ind_vars,
+                            '(cross([nx, ny, nz], inv(mur).dot(B))/mu0)[2]',
+                            ['nx', 'ny', 'nz', 'B', 'mur', 'mu0'], 2)
+
         elif name.startswith('psi'):
             add_scalar(v, 'psi', suffix, ind_vars, solr, soli)
 
         # collect all definition from children
-        #for mm in self.walk():
+        # for mm in self.walk():
         #    if not mm.enabled: continue
         #    if mm is self: continue
         #    mm.add_domain_variables(v, name, suffix, ind_vars,
@@ -379,15 +442,16 @@ class EM3D(PhysModule):
 
         return v
 
-               
     def get_fes_for_dep(self, unknown_name, soldict):
         keys = soldict.keys()
         for k in keys:
             if unknown_name.startswith('psi'):
-               if k.startswith('psi'): break
+                if k.startswith('psi'):
+                    break
             else:
-               if k.startswith('E'): break
+                if k.startswith('E'):
+                    break
         sol = soldict[k]
         solr = sol[0]
         soli = sol[1] if len(sol) > 1 else None
-        return solr, soli                
+        return solr, soli

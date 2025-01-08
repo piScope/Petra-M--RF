@@ -13,7 +13,8 @@ data =  (('label1', VtableElement(None,
                                   guilabel = 'Perfect Electric Conductor',
                                   default =   "Et = 0",
                                   tip = "Essential Homogenous BC" )),)
-
+def bdry_constraints():
+   return [EM2D_PEC]
 
 class EM2D_PEC(EM2D_Bdry):
     has_essential = True

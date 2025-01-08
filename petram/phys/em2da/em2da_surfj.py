@@ -70,6 +70,8 @@ class Jsurft(PhysCoefficient):
        if self.real:  return v.real
        else: return v.imag
        
+def bdry_constraints():
+   return [EM2Da_SurfJ]
 
 class EM2Da_SurfJ(EM2Da_Bdry):
     is_essential = False

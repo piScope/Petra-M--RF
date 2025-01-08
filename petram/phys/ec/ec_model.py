@@ -137,7 +137,7 @@ class EC3D(PhysModule):
     def panel1_param(self):
         panels = super(EC3D, self).panel1_param()
         panels.extend([
-                ["indpendent vars.", self.ind_vars, 0, {}],
+                ["independent vars.", self.ind_vars, 0, {}],
                 ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
                 ["dep. vars.", ','.join(self.dep_vars), 2, {}],
                 ["derived vars.", ','.join(EC3D.der_var_base), 2, {}],
@@ -277,15 +277,6 @@ class EC3D(PhysModule):
             
         elif name.startswith('psi'):
             add_scalar(v, 'psi', suffix, ind_vars, solr, soli)
-
-        # collect all definition from children
-        #for mm in self.walk():
-        #    if not mm.enabled: continue
-        #    if mm is self: continue
-        #    mm.add_domain_variables(v, name, suffix, ind_vars,
-        #                            solr, soli)
-        #    mm.add_bdr_variables(v, name, suffix, ind_vars,
-        #                            solr, soli)
 
         return v
 

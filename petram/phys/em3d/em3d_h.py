@@ -51,6 +51,9 @@ class Ht(VectorPhysCoefficient):
        if self.real:  return v.real
        else: return v.imag
 
+def bdry_constraints():
+   return [EM3D_H]
+       
 class EM3D_H(EM3D_Bdry):
     is_essential = False
     vt  = Vtable(data)

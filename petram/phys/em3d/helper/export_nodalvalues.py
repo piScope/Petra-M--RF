@@ -212,9 +212,9 @@ def interp3D(values, X, Y, Z, mask, vdim=1, complex = False, mask_start=0,
     
     size = len(X.flatten())
     if complex:
-        res = np.zeros((vdim, size), dtype=np.complex)
+        res = np.zeros((vdim, size), dtype=np.complex128)
     else:
-        res = np.zeros((vdim, size), dtype=np.float)
+        res = np.zeros((vdim, size), dtype=np.float64)
     
     for kk, data in enumerate(values):
 
@@ -317,9 +317,9 @@ def export_interpolated_data(path, X, Y, Z, fesvar,
          
     size = len(X.flatten())
     if complex:
-        ans = np.zeros((vdim, size), dtype=np.complex)
+        ans = np.zeros((vdim, size), dtype=np.complex128)
     else:
-        ans = np.zeros((vdim, size), dtype=np.float)
+        ans = np.zeros((vdim, size), dtype=np.float64)
         
     mask= np.zeros(len(X.flatten()), dtype=int) - 1
     for idx, mm, dd in res:

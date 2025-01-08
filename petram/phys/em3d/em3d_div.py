@@ -31,6 +31,9 @@ class Arctan(mfem.PyCoefficient):
    def EvalValue(self, x):
        return  np.arctan2(x[0], x[2])
 
+def domain_constraints():
+   return [EM3D_Div]
+    
 class EM3D_Div(Domain, Phys):
     is_secondary_condition = True   
     has_essential = True

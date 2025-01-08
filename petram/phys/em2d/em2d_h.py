@@ -66,6 +66,8 @@ class Hz(PhysCoefficient):
        if self.real:  return v.real
        else: return v.imag
        
+def bdry_constraints():
+   return [EM2D_H]
 
 class EM2D_H(EM2D_Bdry):
     is_essential = False

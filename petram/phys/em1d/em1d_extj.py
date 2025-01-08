@@ -24,13 +24,16 @@ data =  (('jext', VtableElement('jext', type='complex',
                              tip = "volumetric external current" )),)
 
 from petram.phys.coefficient import VCoeff
-from petram.phys.coefficient import PyComplexVectorSliceCoefficient as ComplexVectorSlice
+#from petram.phys.coefficient import PyComplexVectorSliceCoefficient as ComplexVectorSlice
    
 def jwJ_Coeff(exprs, ind_vars, l, g, omega):
     # iomega x Jext
     fac =  1j * omega
     return VCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
+def domain_constraints():
+   return [EM1D_ExtJ]
+ 
 class EM1D_ExtJ(EM1D_Domain):
     is_secondary_condition = True  # does not count this class for persing "remaining"
     has_3rd_panel = False
@@ -58,7 +61,8 @@ class EM1D_ExtJ(EM1D_Domain):
             
 
             if kfes in [0, 1, 2]:
-                j_slice = ComplexVectorSlice(jwJ, [kfes])               
+                #  j_slice = ComplexVectorSlice(jwJ, [kfes])
+                j_slice = jwJ[kfes]
                 self.add_integrator(engine, 'jext', j_slice,
                                     b.AddDomainIntegrator,
                                     mfem.DomainLFIntegrator)

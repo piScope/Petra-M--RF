@@ -33,6 +33,9 @@ class Et(PhysCoefficient):
        v = v[self.Eyz_idx]
        if self.real:  return v.real
        else: return v.imag
+       
+def bdry_constraints():
+   return [EM1D_E]
    
 class EM1D_E(EM1D_Bdry):
     has_essential = True

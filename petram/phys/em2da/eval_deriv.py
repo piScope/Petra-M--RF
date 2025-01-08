@@ -88,7 +88,8 @@ def eval_grad(gfr, gfi=None):
     sdim = mesh.SpaceDimension()
     p = fes.GetOrder(0)
     #rt_coll = mfem.L2_FECollection(p - 1, sdim)
-    rt_coll = mfem.ND_FECollection(p - 1, sdim)
+    #rt_coll = mfem.ND_FECollection(p - 1, sdim)
+    rt_coll = mfem.ND_FECollection(p, sdim)
 
     rts = FiniteElementSpace(mesh, rt_coll, vdim, ordering)
 

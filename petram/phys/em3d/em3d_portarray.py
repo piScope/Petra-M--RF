@@ -84,6 +84,8 @@ data = (('inc_amp', VtableElement('inc_amp',
                               default=1.0,
                               tip="relative permeability")),)
 
+def bdry_constraints():
+   return [EM3D_PortArray]
 
 class EM3D_PortArray(EM3D_Bdry):
     vt = Vtable(data)
@@ -125,6 +127,7 @@ class EM3D_PortArray(EM3D_Bdry):
         v['mur'] = 1.0
         v['sel_readonly'] = False
         v['sel_index'] = []
+        v['isTimeDependent_RHS'] = True
         return v
 
     def panel1_param(self):
@@ -144,6 +147,13 @@ class EM3D_PortArray(EM3D_Bdry):
         self.mode = v[1]
         self.mn = [int(x) for x in v[2].split(',')]
         self.vt.import_panel_value(self, v[3:])
+
+    def verify_setting(self):
+        if self.isTimeDependent_RHS:
+            flag = True
+        else:
+            flag = False
+        return flag, 'Varying RHS is not set', 'This potntially causes an error with PortScan. Set it Time/NL Dep. panel '
 
     def update_param(self):
         self.vt.preprocess_params(self)

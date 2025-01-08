@@ -6,5 +6,8 @@
 from petram.model import Domain, Bdry, Pair
 from petram.phys.phys_cont  import PhysContinuity
 
+def bdry_constraints():
+   return [EM1D_Continuity]
+
 class EM1D_Continuity(PhysContinuity):
     pass

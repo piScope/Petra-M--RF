@@ -31,7 +31,7 @@ data =  (('epsilonr', VtableElement('epsilonr', type='complex',
                                      guilabel = 'sigma',
                                      default = 0.0, 
                                      tip = "contuctivity" )),
-         ('t_mode', VtableElement('t_mode', type='int',
+         ('t_mode', VtableElement('t_mode', type='float',
                                      guilabel = 'm',
                                      default = 0.0, 
                                      tip = "mode number" )),)
@@ -127,7 +127,7 @@ class InvMu_o_r(PhysCoefficient):
 
 class iInvMu_m_o_r(PhysCoefficient):
    '''
-      -1j/mu0/mur/r
+      1j/mu0/mur/r
    '''
    def __init__(self, *args, **kwargs):
        self.tmode = kwargs.pop('tmode', 1.0)      
@@ -155,6 +155,8 @@ class InvMu_m2_o_r(PhysCoefficient):
        if self.real:  return v.real
        else: return v.imag
        
+def domain_constraints():
+   return [EM2Da_Vac]
        
 class EM2Da_Vac(EM2Da_Domain):
     vt  = Vtable(data)
@@ -263,7 +265,7 @@ class EM2Da_Vac(EM2Da_Domain):
         
         imv_o_r_3 = iInvMu_m_o_r(m,  self.get_root_phys().ind_vars,
                               self._local_ns, self._global_ns,
-                              real = real, tmode = -tmode)
+                              real = real, tmode = tmode)
 
         if r == 1 and c == 0:
             # (-a u_vec, div v_scalar)           
@@ -274,8 +276,8 @@ class EM2Da_Vac(EM2Da_Domain):
                                 mbf.AddDomainIntegrator, itg)
         
 
-    def add_domain_variables(self, v, n, suffix, ind_vars, solr, soli = None):
-        from petram.helper.variables import add_expression, add_constant
+    def add_domain_variables(self, v, n, suffix, ind_vars):
+        from petram.helper.variables import add_constant
 
         e, m, s, tmode = self.vt.make_value_or_expression(self)
         
@@ -290,41 +292,8 @@ class EM2Da_Vac(EM2Da_Domain):
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'mur')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'sigma')
         
-        add_constant(v, 'm_mode', suffix, np.float(tmode),
+        add_constant(v, 'm_mode', suffix, np.float64(tmode),
                      domains = self._sel_index,
                      gdomain = self._global_ns)
         
-        '''
-        var, f_name = self.eval_phys_expr(self.epsilonr, 'epsilonr')
-        if callable(var):
-            add_expression(v, 'epsilonr', suffix, ind_vars, f_name,
-                           [], domains = self._sel_index, 
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'epsilonr', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)
-
-        var, f_name = self.eval_phys_expr(self.mur, 'mur')
-        if callable(var):
-            add_expression(v, 'mur', suffix, ind_vars, f_name,
-                           [], domains = self._sel_index,
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'mur', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)                        
-
-        var, f_name = self.eval_phys_expr(self.sigma, 'sigma')
-        if callable(var):
-            add_expression(v, 'sigma', suffix, ind_vars, f_name,
-                           [], domains = self._sel_index, 
-                           gdomain = self._global_ns)            
-        else:
-            add_constant(v, 'sigma', suffix, var,
-                         domains = self._sel_index,
-                         gdomain = self._global_ns)
-        '''
-            
-
     

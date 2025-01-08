@@ -39,7 +39,10 @@ class rEt(PhysCoefficient):
        v = v[1]*x[0]
        if self.real:  return v.real
        else: return v.imag
-   
+
+def bdry_constraints():
+   return [EM2Da_E]
+       
 class EM2Da_E(EM2Da_Bdry):
     has_essential = True
     vt  = Vtable(data)

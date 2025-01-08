@@ -37,6 +37,9 @@ else:
    compulex conjugate is returned, to force Lagrange multiplier
    real
 '''
+def pair_constraints():
+   return [EM2D_Floquet]
+
 class EM2D_Floquet(Pair,Bdry, Phys):
     def __init__(self,  **kwargs):
         super(EM2D_Floquet, self).__init__(**kwargs)
