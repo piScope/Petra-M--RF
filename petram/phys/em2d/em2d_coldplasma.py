@@ -101,7 +101,7 @@ class EM2D_ColdPlasma(EM2D_Domain, EM2D_Domain_helper):
         self.col_model = v[-3]
         return check
 
-    @ property
+    @property
     def jited_coeff(self):
         return self._jited_coeff
 
