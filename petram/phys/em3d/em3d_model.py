@@ -235,11 +235,12 @@ class EM3D(PhysModule):
     """
 
     def get_default_ns(self):
-        from petram.phys.phys_const import mu0, epsilon0, q0, massu
+        from petram.phys.phys_const import mu0, epsilon0, q0, massu, chargez
         ns = {'mu0': mu0,
               'e0': epsilon0,
               'q0': q0,
-              'massu': massu}
+              'massu': massu,
+              'chargez': chargez}
         return ns
 
     def import_panel1_value(self, v):
