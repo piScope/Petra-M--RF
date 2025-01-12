@@ -222,10 +222,11 @@ class EM2Da(PhysModule):
     """
 
     def get_default_ns(self):
-        from .em2da_const import mu0, epsilon0, q0
+        from petram.phys.phys_const import mu0, epsilon0, q0, massu
         ns = {'mu0': mu0,
               'e0': epsilon0,
-              'q0': q0}
+              'q0': q0,
+              'massu': massu}
         return ns
 
     def import_panel1_value(self, v):

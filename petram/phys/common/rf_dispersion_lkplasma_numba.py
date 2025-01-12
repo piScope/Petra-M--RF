@@ -221,6 +221,24 @@ def chi_el(nperp, npar, ne, te_kev, Bmagn, freq, nharm):
     return np.array([XX, XY, YY, XZ, YZ, ZZ])
 
 
+@njit("float64(float64, float64, float64, float64, float64)")
+def zetae(npar, te, Bmagn, freq, nharm):
+    # zeta_e
+    w_ce = wce(Bmagn, freq)
+    vt = vte(te)
+    zeta_e = 1.0 / (npar * vt) * (1.0 - nharm * w_ce)
+    return zeta_e
+
+
+@njit("float64(float64, float64, float64, float64, float64, float64, float64)")
+def zetai(npar, ti, Bmagn, freq, A, Z, nharm):
+    # zeta_i
+    w_ci = wci(Bmagn, freq, A, Z)
+    vt = vti(ti, A)
+    zeta_i = 1.0 / (npar * vt) * (1.0 - nharm * w_ci)
+    return zeta_i
+
+
 @njit(complex128[:, ::1](float64, float64[:], float64[:], float64[:], darray_ro, iarray_ro,
                          float64, float64, float64, float64, int32))
 def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, nperp, nhrms):
