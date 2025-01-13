@@ -34,7 +34,6 @@ class rJext_p(VectorPhysCoefficient): # i \omega r Jext_t
        self.omega = kwargs.pop('omega', 1.0)
        super(rJext_p, self).__init__(*args, **kwargs)
    def EvalValue(self, x):
-       from petram.phys.em3d.em3d_const import mu0, epsilon0      
        v = super(rJext_p, self).EvalValue(x)
        v = np.array((v[0], v[2]))
        v = 1j * self.omega * v * x[0]
@@ -46,7 +45,6 @@ class Jext_t(PhysCoefficient):  # i \omega Jext_phi
        self.omega = kwargs.pop('omega', 1.0)
        super(Jext_t, self).__init__(*args, **kwargs)
    def EvalValue(self, x):
-       from petram.phys.em3d.em3d_const import mu0, epsilon0      
        v = super(Jext_t, self).EvalValue(x)
        v = 1j * self.omega * v[1]
        if self.real:  return v.real

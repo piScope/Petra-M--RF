@@ -23,20 +23,27 @@ def om(freq):
 
 @njit("float64(float64, float64)")
 def wpesq(ne, freq):
+    # wpe**2 normalized by omega**2
     return 4.0 * pi * ne * meter3_per_cm3 * q0_cgs**2 / me_gram / om(freq)**2
 
 
 @njit("float64(float64, float64, float64, float64)")
 def wpisq(ni, A, Z, freq):
+    # wpi**2 normalized by omega**2
+
     return 4.0 * pi * ni * meter3_per_cm3 * \
         (q0_cgs * Z)**2 / (A * mp_gram) / om(freq)**2
 
 
 @njit("float64(float64, float64)")
 def wce(Bmagn, freq):
+    # wce normalized by omega
+
     return (-q0_cgs * Bmagn * gausspertesla) / (me_gram * clight) / om(freq)
 
 
 @njit("float64(float64, float64, float64, float64)")
 def wci(Bmagn, freq, A, Z):
+    # wci normalized by omega
+
     return (q0_cgs * Z * Bmagn * gausspertesla) / (A * mp_gram * clight) / om(freq)

@@ -47,12 +47,10 @@ class Jsurf(VectorPhysCoefficient):
    def __init__(self, *args, **kwargs):
        omega = kwargs.pop('omega', 1.0)
        self.mur = kwargs.pop('mur', 1.0)
-       from .em3d_const import mu0, epsilon0
        self.fac = -1j*omega
        super(Jsurf, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
-       from .em3d_const import mu0, epsilon0
        v = super(Jsurf, self).EvalValue(x)
        v = self.fac * v
        if self.real:  return v.real

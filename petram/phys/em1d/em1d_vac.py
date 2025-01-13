@@ -5,7 +5,8 @@
 
 '''
 from petram.phys.vtable import VtableElement, Vtable
-from petram.phys.em1d.em1d_const import mu0, epsilon0
+from petram.phys.phys_const import mu0, epsilon0
+
 from petram.mfem_config import use_parallel
 import numpy as np
 

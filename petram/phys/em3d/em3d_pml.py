@@ -21,7 +21,7 @@
       CopyRight (c) 2020-  S. Shiraiwa
 '''
 from petram.phys.vtable import VtableElement, Vtable
-from petram.phys.em3d.em3d_const import mu0, epsilon0
+
 from petram.phys.coefficient import CC_Matrix
 from petram.mfem_config import use_parallel
 import numpy as np

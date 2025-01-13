@@ -56,7 +56,8 @@ Expansion of matrix is as follows
                  [e_zx  e_zy  e_zz ][Ez]
 
 '''
-from petram.phys.em1d.em1d_const import mu0, epsilon0
+from petram.phys.phys_const import mu0, epsilon0
+
 '''
 class Epsilon(PhysCoefficient):
    #

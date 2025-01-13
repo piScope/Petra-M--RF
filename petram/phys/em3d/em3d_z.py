@@ -87,7 +87,7 @@ data3 = (('Z_param', VtableElement('Z_param',
                                    default = 'Impedance')),)
 
 from petram.phys.coefficient import SCoeff
-from .em3d_const import mu0, epsilon0
+from petram.phys.phys_const import mu0, epsilon0
 
 class ImpedanceByEMS(mfem.PyCoefficient):
    def __init__(self, ems,  ind_vars, l, g, omega, real):

@@ -12,7 +12,7 @@ import numpy as np
 from petram.mfem_config import use_parallel, get_numba_debug
 
 from petram.phys.vtable import VtableElement, Vtable
-from petram.phys.em3d.em3d_const import mu0, epsilon0
+from petram.phys.phys_const import mu0, epsilon0
 from petram.phys.coefficient import SCoeff, VCoeff, MCoeff
 from petram.phys.numba_coefficient import NumbaCoefficient
 
@@ -82,7 +82,6 @@ class EM3D_LocalKPlasma(EM3D_Domain):
         self._jited_coeff = self.get_coeffs()
 
     def get_coeffs(self):
-        from .em3d_const import mu0, epsilon0
         freq, omega = self.get_root_phys().get_freq_omega()
         B, dens_e, t_e, dens_i, t_i, t_c, masses, charges, kpakpe, kpevec = self.vt.make_value_or_expression(
             self)

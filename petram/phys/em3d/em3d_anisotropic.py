@@ -35,7 +35,7 @@ data =  (('epsilonr', VtableElement('epsilonr', type='complex',
                                      tip = "contuctivity" )),)
 
 from petram.phys.coefficient import MCoeff
-from petram.phys.em3d.em3d_const import mu0, epsilon0
+from petram.phys.phys_const import mu0, epsilon0
 
 def Epsilon_Coeff(exprs, ind_vars, l, g, omega):
     # - omega^2 * epsilon0 * epsilonr
@@ -70,7 +70,6 @@ class EM3D_Anisotropic(EM3D_Domain):
         else: return False
         
     def get_coeffs(self, real = True):
-        from .em3d_const import mu0, epsilon0
         freq, omega = self.get_root_phys().get_freq_omega()
         e, m, s = self.vt.make_value_or_expression(self)
         

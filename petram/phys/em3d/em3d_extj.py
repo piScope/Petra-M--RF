@@ -29,7 +29,6 @@ class Jext(VectorPhysCoefficient):
        self.omega = kwargs.pop('omega', 1.0)
        super(Jext, self).__init__(*args, **kwargs)
    def EvalValue(self, x):
-       from .em3d_const import mu0, epsilon0
        v = super(Jext, self).EvalValue(x)
        v = 1j * self.omega * v
        if self.real:  return v.real

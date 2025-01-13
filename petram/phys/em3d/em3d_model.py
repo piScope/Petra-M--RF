@@ -248,9 +248,6 @@ class EM3D(PhysModule):
         self.freq_txt = str(v[0])
         self.ind_vars = str(v[1])
         self.dep_vars_suffix = str(v[2])
-        #from petram.phys.em3d.em3d_const import mu0, epsilon0
-        #self._global_ns['mu0'] = mu0
-        #self._global_ns['epsilon0'] = epsilon0
 
     def get_possible_bdry(self):
         if EM3D._possible_constraints is None:

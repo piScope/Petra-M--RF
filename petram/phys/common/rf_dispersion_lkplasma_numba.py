@@ -222,19 +222,19 @@ def chi_el(nperp, npar, ne, te_kev, Bmagn, freq, nharm):
 
 
 @njit("float64(float64, float64, float64, float64, float64)")
-def zetae(npar, te, Bmagn, freq, nharm):
+def zetae(npar, te_kev, Bmagn, freq, nharm):
     # zeta_e
     w_ce = wce(Bmagn, freq)
-    vt = vte(te)
+    vt = vte(te_kev)
     zeta_e = 1.0 / (npar * vt) * (1.0 - nharm * w_ce)
     return zeta_e
 
 
 @njit("float64(float64, float64, float64, float64, float64, float64, float64)")
-def zetai(npar, ti, Bmagn, freq, A, Z, nharm):
+def zetai(npar, ti_kev, Bmagn, freq, A, Z, nharm):
     # zeta_i
     w_ci = wci(Bmagn, freq, A, Z)
-    vt = vti(ti, A)
+    vt = vti(ti_kev, A)
     zeta_i = 1.0 / (npar * vt) * (1.0 - nharm * w_ci)
     return zeta_i
 

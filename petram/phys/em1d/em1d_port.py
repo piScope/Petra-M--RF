@@ -3,7 +3,8 @@
 '''
 from petram.phys.vtable import VtableElement, Vtable
 from petram.mfem_config import use_parallel
-from petram.phys.em1d.em1d_const import epsilon0, mu0
+from petram.phys.phys_const import mu0, epsilon0
+
 from mfem.common.mpi_debug import nicePrint
 import sys
 import numpy as np
