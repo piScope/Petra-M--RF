@@ -67,6 +67,62 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
 
 kpe_options = ["explicit", "fast wave", "slow wave"]
 default_kpe_option = "explicit"
+term_options = ["S", "D", "P", "Tau", "Eta", "Xi", "Abs. only"]
+default_term_option = [(x, True)
+                       for x in term_options[:-1]] + [(term_options[-1], False)]
+
+#
+# routine for processing contribution panel data
+#
+
+
+def value2panelvalue(num_ions, value):
+    if value is None:
+        return [[x[1] for x in default_term_option]]*(num_ions+1)
+
+    names = [xx.split(',')[0] for xx in value.split("\n")]
+    opts = [[x.split(":")[0].strip() for x in xx.split(',')[1:]]
+            for xx in value.split("\n")]
+    tmp = [[bool(int(x.split(":")[-1])) for x in xx.split(',')[1:]]
+           for xx in value.split("\n")]
+
+    panelvalue = [[x[1] for x in default_term_option]]*(num_ions+1)
+
+    for i, x in enumerate(tmp):
+        if opts[i] != term_options:
+            continue
+        if i == 0:
+            name = 'electrons'
+        else:
+            name = 'ions'+str(i)
+
+        if names[i] != name:
+            continue
+        panelvalue[i] = x
+
+    return panelvalue
+
+
+def value2flags(num_ions, value):
+    tmp = value2panelvalue(num_ions, value)
+    return np.array(tmp).astype(np.int32)
+
+
+def panelvalue2value(panelvalue):
+
+    txt = []
+    for i, x in enumerate(panelvalue):
+        if i == 0:
+            name = 'electrons'
+        else:
+            name = 'ions'+str(i)
+        txt.append(name+','+', '.join([xx[0]+":"+str(int(xx[1])) for xx in x]))
+
+    return "\n".join(txt)
+
+#
+#  build compiled function for assembly
+#
 
 
 def make_functions():
@@ -87,8 +143,7 @@ def make_functions():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms)
-
+                                    npara, nperp, nhrms, lk_terms)
         # anti_hermitian (collisional abs.)
         e_cold = epsilonr_pl_cold_std(
             omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
@@ -112,6 +167,10 @@ def make_functions():
 
     return epsilonr, sdp, mur, sigma
 
+#
+#  functions for variables
+#
+
 
 def make_function_variable():
     '''
@@ -134,7 +193,7 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms)
+                                    npara, nperp, nhrms, lk_terms)
 
         # calling cold with Tc
         e_cold = epsilonr_pl_cold_std(
@@ -171,7 +230,7 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms)
+                                    npara, nperp, nhrms, lk_terms)
         return e_hot
 
     def mur(*_ptx):
@@ -228,7 +287,7 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms)
+                                    npara, nperp, nhrms, lk_terms)
 
         e_hota = (e_hot - e_hot.transpose().conj())/2.0
         out = -epsilon0 * omega * omega * e_hota
@@ -258,7 +317,7 @@ def make_function_variable():
             dens_i2[i] = dens_i[i]
             e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i2,  masses, charges,
                                         t_e, dens_e,
-                                        npara, nperp, nhrms)
+                                        npara, nperp, nhrms, lk_terms)
 
             e_hota = (e_hot - e_hot.transpose().conj()) / 2.0
             out = -epsilon0 * omega * omega * e_hota
@@ -331,7 +390,7 @@ def make_function_variable():
 def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
                        masses, charges, kpakpe, kpevec, kpe_mode, col_model,
                        g_ns, l_ns, kpe_alg="", sdim=3,
-                       tmode=None, mmode=None, kymode=None, kzmode=None):
+                       tmode=None, mmode=None, kymode=None, kzmode=None, terms=None):
 
     Da = 1.66053906660e-27      # atomic mass unit (u or Dalton) (kg)
 
@@ -368,7 +427,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
 
     params = {'omega': omega, 'masses': masses, 'charges': charges, 'nhrms': 20,
               'c': speed_of_light, 'kpe_mode': kpe_options.index(kpe_mode), "kpe_alg": kpe_alg,
-              'col_model': col_model}
+              'col_model': col_model, 'lk_terms': terms}
 
     if tmode is not None:
         params["tmode"] = tmode
@@ -415,7 +474,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
 
 def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
                     masses, charges, kpakpe, kpevec, kpe_mode, kpe_alg, col_model,
-                    g_ns, l_ns, sdim=3):
+                    g_ns, l_ns, sdim=3, terms=None):
 
     Da = 1.66053906660e-27      # atomic mass unit (u or Dalton) (kg)
 
@@ -460,7 +519,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
     col_model = col_model_options.index(col_model)
     params = {'omega': omega, 'masses': masses, 'charges': charges, 'nhrms': 20,
               'c': speed_of_light, "kpe_mode": kpe_options.index(kpe_mode),
-              'kpe_alg': kpe_alg, 'col_model': col_model}
+              'kpe_alg': kpe_alg, 'col_model': col_model, 'lk_terms': terms}
 
     epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi = make_function_variable()
 

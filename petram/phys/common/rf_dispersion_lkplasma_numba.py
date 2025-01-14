@@ -43,6 +43,7 @@ import numpy as np
 from petram.phys.common.rf_plasma_wc_wp import om, wpesq, wpisq, wce, wci
 
 iarray_ro = types.Array(int32, 1, 'C', readonly=True)
+iarray2_ro = types.Array(int32, 2, 'C', readonly=True)
 darray_ro = types.Array(float64, 1, 'C', readonly=True)
 
 
@@ -239,38 +240,83 @@ def zetai(npar, ti_kev, Bmagn, freq, A, Z, nharm):
     return zeta_i
 
 
+@njit(complex128[:](complex128[:], iarray_ro))
+def adjust_terms(tmp, terms):
+    ret = np.array([0j, 0j, 0j, 0j, 0j, 0j])
+    if terms[0]:       # S
+        ret[0] = tmp[0]
+    if terms[1]:       # D
+        ret[1] = tmp[1]
+    if terms[2]:       # P
+        ret[5] = tmp[5]
+    if terms[3] and terms[0]:   # yy = S+Tau
+        ret[2] = tmp[2]
+    elif not terms[3] and terms[0]:  # yy = S
+        ret[2] = tmp[0]
+    elif terms[3] and not terms[0]:  # yy = tau
+        ret[2] = tmp[2] - tmp[0]
+    else:
+        pass
+    if terms[4]:       # Eta
+        ret[3] = tmp[3]
+    if terms[5]:       # Xi
+        ret[4] = tmp[4]
+    return ret
+
+
 @njit(complex128[:, ::1](float64, float64[:], float64[:], float64[:], darray_ro, iarray_ro,
-                         float64, float64, float64, float64, int32))
-def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, nperp, nhrms):
+                         float64, float64, float64, float64, int32, iarray2_ro))
+def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, nperp, nhrms, terms):
 
     b_norm = sqrt(B[0]**2+B[1]**2+B[2]**2)
     freq = w/2/pi
 
-    chi_terms = np.array([0j, 0j, 0j, 0j, 0j, 0j])
+    M = array([[1.+0j,   0., 0.],
+               [0.,   1.+0j, 0.j],
+               [0.,   0.,    1.+0j]])
 
+    icount = 0
     if ne > 0.:
         te_kev = Te/1000.
+        tmp = np.array([0j, 0j, 0j, 0j, 0j, 0j])
         for nh in range(-nhrms, nhrms+1):
-            chi_terms += chi_el(nperp, npara, ne, te_kev, b_norm, freq, nh)
+            tmp += chi_el(nperp, npara, ne, te_kev, b_norm, freq, nh)
+
+        tmp = adjust_terms(tmp, terms[icount, :])
+        M2 = array([[tmp[0], tmp[1], tmp[3]],
+                    [-tmp[1], tmp[2], tmp[4]],
+                    [tmp[3], -tmp[4], tmp[5]], ])
+
+        if terms[icount, 6]:
+            M2 = (M2 - M2.transpose().conj()) / 2.0
+
+        M += M2
+        icount += 1
 
     for Ti, dens, mass, charge in zip(temps, denses, masses, charges):
         ti_kev = Ti/1000.
         A = mass/Da
         Z = charge
         if dens <= 0.:
+            icount += 1
             continue
+
+        tmp = np.array([0j, 0j, 0j, 0j, 0j, 0j])
         for nh in range(-nhrms, nhrms+1):
-            chi_terms += chi_ions(nperp, npara, dens, A,
-                                  Z, ti_kev, b_norm, freq, nh)
+            tmp += chi_ions(nperp, npara, dens, A,
+                            Z, ti_kev, b_norm, freq, nh)
 
-    M = array([[1.+0j,   0., 0.],
-               [0.,   1.+0j, 0.j],
-               [0.,   0.,    1.+0j]])
-    M2 = array([[chi_terms[0], chi_terms[1], chi_terms[3]],
-                [-chi_terms[1], chi_terms[2], chi_terms[4]],
-                [chi_terms[3], -chi_terms[4], chi_terms[5]], ])
+        tmp = adjust_terms(tmp, terms[icount, :])
+        M2 = array([[tmp[0], tmp[1], tmp[3]],
+                    [-tmp[1], tmp[2], tmp[4]],
+                    [tmp[3], -tmp[4], tmp[5]], ])
 
-    M += M2
+        if terms[icount, 6]:
+            M2 = (M2 - M2.transpose().conj()) / 2.0
+
+        M += M2
+        icount += 1
+
     return M
 
 
