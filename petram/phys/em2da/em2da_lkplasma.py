@@ -102,8 +102,9 @@ class EM2Da_LocalKPlasma(EM2Da_Domain):
         from petram.phys.common.rf_lk_term_panel import ask_rf_lk_terms
 
         self.vt.preprocess_params(self)
-        B, dens_e, t_e, dens_i, t_i, t_c, masses, charges, kpakpe, kpevec, mmode = self.vt.make_value_or_expression(
-            self)
+        #B, dens_e, t_e, dens_i, t_i, t_c, masses, charges, kpakpe, kpevec, mmode
+        ret = self.vt.make_value_or_expression(self)
+        charges = ret[7]
 
         num_ions = len(charges)
         win = evt.GetEventObject()
@@ -129,7 +130,7 @@ class EM2Da_LocalKPlasma(EM2Da_Domain):
         return values
 
     def import_panel1_value(self, v):
-        check = super(EM2Da_LocalKPlasma, self).import_panel1_value(v[:-3])
+        check = super(EM2Da_LocalKPlasma, self).import_panel1_value(v[:-4])
         self.kpe_mode = v[-4]
         self.kpe_alg = v[-3]
         self.col_model = v[-2]

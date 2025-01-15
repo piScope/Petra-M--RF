@@ -3,7 +3,10 @@
 '''
 from petram.phys.common.rf_dispersion_lkplasma import (vtable_data0,
                                                        default_kpe_option,
-                                                       kpe_options)
+                                                       kpe_options,
+                                                       term_options,
+                                                       default_term_option)
+
 from petram.phys.common.rf_dispersion_coldplasma import (col_model_options,
                                                          default_col_model,)
 
@@ -66,25 +69,43 @@ class EM1D_LocalKPlasma(EM1D_Vac):
         v["kpe_mode"] = default_kpe_option
         v["kpe_alg"] = kpe_alg_options[0]
         v["col_model"] = default_col_model
+        v["lk_terms"] = None
         return v
+
+    def config_terms(self, evt):
+        from petram.phys.common.rf_lk_term_panel import ask_rf_lk_terms
+
+        self.vt.preprocess_params(self)
+        ret = self.vt.make_value_or_expression(self)
+        charges = ret[7]
+
+        num_ions = len(charges)
+        win = evt.GetEventObject()
+        value = ask_rf_lk_terms(win, num_ions, self.lk_terms)
+        self.lk_terms = value
 
     def panel1_param(self):
         panels = super(EM1D_LocalKPlasma, self).panel1_param()
         panels.append(["kpe mode", None, 1, {"values": kpe_options}])
         panels.append(["kpe alg.", None, 1, {"values": kpe_alg_options}])
         panels.append(["col. model", None, 1, {"values": col_model_options}])
+        panels.extend([  # ["contributions", "", 2, None],
+            [None, None, 341, {"label": "Customize terms",
+                               "func": "config_terms",
+                               "sendevent": True,
+                               "noexpand": True}], ])
         return panels
 
     def get_panel1_value(self):
         values = super(EM1D_LocalKPlasma, self).get_panel1_value()
-        values.extend([self.kpe_mode, self.kpe_alg, self.col_model])
+        values.extend([self.kpe_mode, self.kpe_alg, self.col_model, self])
         return values
 
     def import_panel1_value(self, v):
-        check = super(EM1D_LocalKPlasma, self).import_panel1_value(v[:-3])
-        self.kpe_mode = v[-3]
-        self.kpe_alg = v[-2]
-        self.col_model = v[-1]
+        check = super(EM1D_LocalKPlasma, self).import_panel1_value(v[:-4])
+        self.kpe_mode = v[-4]
+        self.kpe_alg = v[-3]
+        self.col_model = v[-2]
         return check
 
     @property
@@ -102,13 +123,18 @@ class EM1D_LocalKPlasma(EM1D_Vac):
         kpe_mode = self.kpe_mode
         kpe_alg = self.kpe_alg
 
+        from petram.phys.common.rf_dispersion_lkplasma import value2flags
+
+        num_ions = len(charges)
+        terms = value2flags(num_ions, self.lk_terms)
+
         from petram.phys.common.rf_dispersion_lkplasma import build_coefficients
 
         coeff1, coeff2, coeff3, coeff4 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
                                                             dens_i, t_i, masses, charges, kpakpe, kpevec,
                                                             kpe_mode, self.col_model,
                                                             self._global_ns, self._local_ns,
-                                                            kpe_alg=kpe_alg, sdim=1, kymode=ky, kzmode=kz)
+                                                            kpe_alg=kpe_alg, sdim=1, kymode=ky, kzmode=kz, terms=terms)
         return coeff1, coeff2, coeff3, coeff4, ky, kz
 
     def add_bf_contribution(self, engine, a, real=True, kfes=0):
@@ -223,6 +249,11 @@ class EM1D_LocalKPlasma(EM1D_Vac):
                      domains=self._sel_index,
                      gdomain=self._global_ns)
 
+        from petram.phys.common.rf_dispersion_lkplasma import value2flags
+
+        num_ions = len(charges)
+        terms = value2flags(num_ions, self.lk_terms)
+
         from petram.phys.common.rf_dispersion_lkplasma import build_variables
 
         ss = self.parent.parent.name()+'_'+self.name()  # phys module name + name
@@ -231,7 +262,7 @@ class EM1D_LocalKPlasma(EM1D_Vac):
                               dens_i, t_i, masses, charges,
                               kpakpe, kpevec, kpe_mode, kpe_alg, self.col_model,
                               self._global_ns, self._local_ns,
-                              sdim=1)
+                              sdim=1, terms=terms)
 
         from petram.phys.common.rf_dispersion_lkplasma import add_domain_variables_common
         add_domain_variables_common(self, ret, v, suffix, ind_vars)
