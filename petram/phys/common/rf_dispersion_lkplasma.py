@@ -301,8 +301,6 @@ def make_function_variable():
         out = -epsilon0 * omega * omega * e_hota
         out = rotate_dielectric(B, kpe, out)
 
-        #if lk_terms[0]:  # if herimitian is cold, should return 0
-        #    out *= 0
         return out
 
     def epsilonrai(*ptx, B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):
@@ -334,9 +332,6 @@ def make_function_variable():
             out = rotate_dielectric(B, kpe, out)
 
             ret[i, :, :] = out
-
-        #if lk_terms[0]:  # if herimitian is cold, should return 0
-        #    ret *= 0
 
         return ret
 
