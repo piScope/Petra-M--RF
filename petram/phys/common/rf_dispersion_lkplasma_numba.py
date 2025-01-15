@@ -24,6 +24,9 @@ array([[-1.56316016e+03+1.23807373e+01j, -1.12033076e+01-9.84907588e+03j,
          1.29769916e+06+1.58788920e+06j]])
 
 '''
+import petram.debug as debug
+dprint1, dprint2, dprint3 = debug.init_dprints('RF_DISPERSION_LKPLASMA_NUMBA')
+
 from petram.phys.phys_const import c as speed_of_light
 from petram.helper.numba_ive import ive
 from petram.phys.common.numba_zfunc import zfunc
@@ -46,6 +49,12 @@ iarray_ro = types.Array(int32, 1, 'C', readonly=True)
 iarray2_ro = types.Array(int32, 2, 'C', readonly=True)
 darray_ro = types.Array(float64, 1, 'C', readonly=True)
 
+# slience log message
+dprint1("Importing numba routines")
+import logging
+numba_logger = logging.getLogger('numba')
+numba_clevel = numba_logger.level
+numba_logger.setLevel(logging.WARNING)
 
 # constants
 gausspertesla = 1.E4
@@ -287,9 +296,6 @@ def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, npe
                     [-tmp[1], tmp[2], tmp[4]],
                     [tmp[3], -tmp[4], tmp[5]], ])
 
-        if terms[icount, 6]:
-            M2 = (M2 - M2.transpose().conj()) / 2.0
-
         M += M2
         icount += 1
 
@@ -310,9 +316,6 @@ def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, npe
         M2 = array([[tmp[0], tmp[1], tmp[3]],
                     [-tmp[1], tmp[2], tmp[4]],
                     [tmp[3], -tmp[4], tmp[5]], ])
-
-        if terms[icount, 6]:
-            M2 = (M2 - M2.transpose().conj()) / 2.0
 
         M += M2
         icount += 1
@@ -477,3 +480,6 @@ def eval_kpe_em2d(ptx, kpara, kperp, k, b):
     kvec = array([k[0], k[1], kz])
 
     return kvec
+
+# back to the original log level
+numba_logger.setLevel(numba_clevel)

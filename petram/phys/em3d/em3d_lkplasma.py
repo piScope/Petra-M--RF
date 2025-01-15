@@ -120,7 +120,7 @@ class EM3D_LocalKPlasma(EM3D_Domain):
                                                             dens_i, t_i, masses, charges, kpakpe, kpevec,
                                                             kpe_mode, self.col_model,
                                                             self._global_ns, self._local_ns,
-                                                            kpe_alg=kpe_alg, sdim=3 terms=terms)
+                                                            kpe_alg=kpe_alg, sdim=3, terms=terms)
 
         return coeff1, coeff2, coeff3, coeff4
 

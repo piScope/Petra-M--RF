@@ -67,9 +67,8 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
 
 kpe_options = ["explicit", "fast wave", "slow wave"]
 default_kpe_option = "explicit"
-term_options = ["S", "D", "P", "Tau", "Eta", "Xi", "Abs. only"]
-default_term_option = [(x, True)
-                       for x in term_options[:-1]] + [(term_options[-1], False)]
+term_options = ["Sig", "Del", "Pi", "Tau", "Eta", "Xi"]
+default_term_option = [(x, True) for x in term_options[:]]
 
 #
 # routine for processing contribution panel data
@@ -78,8 +77,11 @@ default_term_option = [(x, True)
 
 def value2panelvalue(num_ions, value):
     if value is None:
-        return [[x[1] for x in default_term_option]]*(num_ions+1)
+        return [False]+[[x[1] for x in default_term_option]]*(num_ions+1)
 
+    v1 = int(value.split('\n')[0])
+
+    value = '\n'.join(value.split('\n')[1:])
     names = [xx.split(',')[0] for xx in value.split("\n")]
     opts = [[x.split(":")[0].strip() for x in xx.split(',')[1:]]
             for xx in value.split("\n")]
@@ -100,18 +102,17 @@ def value2panelvalue(num_ions, value):
             continue
         panelvalue[i] = x
 
-    return panelvalue
+    return [bool(v1)]+panelvalue
 
 
 def value2flags(num_ions, value):
     tmp = value2panelvalue(num_ions, value)
-    return np.array(tmp).astype(np.int32)
+    return tmp[0], np.array(tmp[1:]).astype(np.int32)
 
 
 def panelvalue2value(panelvalue):
-
-    txt = []
-    for i, x in enumerate(panelvalue):
+    txt = [str(int(panelvalue[0]))]
+    for i, x in enumerate(panelvalue[1:]):
         if i == 0:
             name = 'electrons'
         else:
@@ -143,13 +144,18 @@ def make_functions():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms)
-        # anti_hermitian (collisional abs.)
-        e_cold = epsilonr_pl_cold_std(
-            omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
-        e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
+                                    npara, nperp, nhrms, lk_terms[1])
 
-        out = -epsilon0 * omega * omega * (e_colda + e_hot)
+        if lk_terms[0]:
+            # use cold plasma propagation + absoprtion due to hot
+            e_hota = (e_hot - e_hot.transpose().conj()) / 2.0
+            eps = e_cold + e_hota
+        else:
+            # add anti_hermitian (collisional abs.) from cold
+            e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
+            eps = e_colda + e_hot
+
+        out = -epsilon0 * omega * omega * eps
         out = rotate_dielectric(B, kpe, out)
 
         return out
@@ -193,15 +199,19 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms)
+                                    npara, nperp, nhrms, lk_terms[1])
 
         # calling cold with Tc
-        e_cold = epsilonr_pl_cold_std(
-            omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
-        e_colda = ((e_cold - e_cold.transpose().conj()) /
-                   2.0)  # anti_hermitian (collisional abs.)
+        if lk_terms[0]:
+            # use cold plasma propagation + absoprtion due to hot
+            e_hota = (e_hot - e_hot.transpose().conj()) / 2.0
+            eps = e_cold + e_hota
+        else:
+            # add anti_hermitian (collisional abs.) from cold
+            e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
+            eps = e_colda + e_hot
 
-        out = -epsilon0 * omega * omega * (e_colda + e_hot)
+        out = -epsilon0 * omega * omega * eps
         out = rotate_dielectric(B, kpe, out)
 
         return out
@@ -230,7 +240,7 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms)
+                                    npara, nperp, nhrms, lk_terms[1])
         return e_hot
 
     def mur(*_ptx):
@@ -259,9 +269,7 @@ def make_function_variable():
         nperp = npape[1].real
         kpe = kpe_alg(array(ptx), omega*npara/c, omega*nperp/c, kpevec, B)
 
-        # calling cold with Tc and take anti_hermitian part.
-        e_cold = epsilonr_pl_cold_std(
-            omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
+        # take anti_hermitian part.
         e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
         out = -epsilon0 * omega * omega * e_colda
 
@@ -287,12 +295,14 @@ def make_function_variable():
 
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms)
+                                    npara, nperp, nhrms, lk_terms[1])
 
         e_hota = (e_hot - e_hot.transpose().conj())/2.0
         out = -epsilon0 * omega * omega * e_hota
         out = rotate_dielectric(B, kpe, out)
 
+        if lk_terms[0]:  # if herimitian is cold, should return 0
+            out *= 0
         return out
 
     def epsilonrai(*ptx, B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):
@@ -317,13 +327,17 @@ def make_function_variable():
             dens_i2[i] = dens_i[i]
             e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i2,  masses, charges,
                                         t_e, dens_e,
-                                        npara, nperp, nhrms, lk_terms)
+                                        npara, nperp, nhrms, lk_terms[1])
 
             e_hota = (e_hot - e_hot.transpose().conj()) / 2.0
             out = -epsilon0 * omega * omega * e_hota
             out = rotate_dielectric(B, kpe, out)
 
             ret[i, :, :] = out
+
+        if lk_terms[0]:  # if herimitian is cold, should return 0
+            ret *= 0
+
         return ret
 
     def npape(*ptx, B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):

@@ -1,8 +1,18 @@
+import petram.debug as debug
+dprint1, dprint2, dprint3 = debug.init_dprints('RF_DISPERSION_COLDPLASMA_NUMBA')
+
 from numba import njit, void, int32, int64, float64, complex128, types
 from numpy import (pi, sin, cos, exp, sqrt, log, arctan2, cross,
                    max, array, linspace, conj, transpose, arccos,
                    sum, zeros, dot, array, ascontiguousarray)
 import numpy as np
+
+# slience log message
+dprint1("Importing numba routines")
+import logging
+numba_logger = logging.getLogger('numba')
+numba_clevel = numba_logger.level
+numba_logger.setLevel(logging.WARNING)
 
 # vacuum permittivity
 from petram.phys.phys_const import epsilon0 as e0
@@ -331,3 +341,7 @@ def epsilonr_pl_cold_generic(w, B, denses, masses, charges, Te, ne, terms, col_m
                            charges, Te, ne, terms, col_model)
 
     return rotate_dielectric(B, M)
+
+
+# back to the original log level
+numba_logger.setLevel(numba_clevel)

@@ -3,7 +3,9 @@ import wx
 from ifigure.utils.edit_list import EditListPanel, EDITLIST_CHANGED
 
 from petram.phys.common.rf_dispersion_lkplasma import (term_options,
-                                                       default_term_option)
+                                                       default_term_option,
+                                                       value2panelvalue,
+                                                       panelvalue2value)
 
 
 def elp_setting(num_ions):
@@ -12,6 +14,7 @@ def elp_setting(num_ions):
         names.append("ions"+str(i+1))
 
     panels = []
+    panels.append([None, True, 3, {"text": "use coldplasma for propagation"}])
     for n in names:
         panels.append([n, None, 36, {"col":7,
                                      "labels": term_options}])
