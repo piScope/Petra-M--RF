@@ -345,6 +345,25 @@ def make_function_variable():
         npape = eval_npara_nperp(array(ptx), omega, kpakpe, kpe_mode, e_cold)
         return npape
 
+    def lkframe(*ptx, B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):
+        from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_std
+        from petram.phys.common.rf_dispersion_lkplasma_numba import (epsilonr_pl_hot_std,
+                                                                     eval_npara_nperp,
+                                                                     rotate_dielectric,)
+
+        e_cold = epsilonr_pl_cold_std(
+            omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
+
+        npape = eval_npara_nperp(array(ptx), omega, kpakpe, kpe_mode, e_cold)
+        npara = npape[0].real
+        nperp = npape[1].real
+        kpe = kpe_alg(array(ptx), omega*npara/c, omega*nperp/c, kpevec, B)
+        x = kpe/np.linalg.norm(kpe)*omega*nperp/c
+        z = B
+        y = np.cross(z, x)
+        y /= np.linalg.norm(y)
+        return np.vstack((x, y, z))
+
     def fce(*_ptx,  B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):
         from petram.phys.common.rf_dispersion_lkplasma_numba import wce
 
@@ -393,7 +412,8 @@ def make_function_variable():
 
         return fpi
 
-    return epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi
+    return (epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae,
+            epsilonrai, npape, sdphot, fce, fci, fpe, fpi, lkframe)
 
 
 def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
@@ -530,7 +550,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
               'c': speed_of_light, "kpe_mode": kpe_options.index(kpe_mode),
               'kpe_alg': kpe_alg, 'col_model': col_model, 'lk_terms': terms}
 
-    epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi = make_function_variable()
+    epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi, lkframe = make_function_variable()
 
     solvar["_B_"+ss] = B_var
     solvar["_tc_"+ss] = tc_var
@@ -574,8 +594,10 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
     var13 = variable.float(dependency=dependency, params=params)(fpe)
     var14 = variable.array(complex=False, shape=(len(masses),),
                            dependency=dependency, params=params)(fpi)
+    var15 = variable.array(complex=True, shape=(3, 3),
+                           dependency=dependency, params=params)(lkframe)
 
-    return var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14
+    return var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15
 
 
 def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
@@ -595,6 +617,7 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
     v["_fci_"+ss] = ret[11]
     v["_fpe_"+ss] = ret[12]
     v["_fpi_"+ss] = ret[13]
+    v["_lkframe_"+ss] = ret[14]
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'epsilonr', [
         "_e_"+ss + "/(-omega*omega*e0)"], ["omega"])
@@ -606,6 +629,22 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
         "_eai_"+ss + "/(-omega*omega*e0)"], ["omega"])
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'EPSstix', ["_spdhot_"+ss],)
+    obj.do_add_matrix_expr(v, suffix, ind_vars, 'lkframe', ["_lkframe_"+ss],)
+    obj.do_add_matrix_expr(v, suffix, ind_vars, 'lkperp', [
+                           "_lkframe_"+ss+"[0]"],)
+
+    frm = "_lkframe_"+ss
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'Eplus',
+                           "(("+frm+".dot(E))[0]/norm("+frm +
+                           "[0])+ 1j*("+frm+".dot(E))[1])/2",
+                           vars=["E"])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'Eminus',
+                           "(("+frm+".dot(E))[0]/norm("+frm +
+                           "[0])- 1j*("+frm+".dot(E))[1])/2",
+                           vars=["E"])
+    obj.do_add_scalar_expr(v, suffix, ind_vars, 'Ezeta',
+                           "("+frm+".dot(E))[2]/norm("+frm+"[2])",
+                           vars=["E"])
 
     obj.do_add_scalar_expr(v, suffix, ind_vars, "Pcol",
                            "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0",
@@ -622,17 +661,6 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
     obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi3",
                            "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0",
                            vars=['E', 'epsilonrai', 'omega'],)
-
-    # add_expression(v, 'Pcol', suffix, ind_vars,
-    #               "omega*conj(E).dot(epsilonrac.dot(E))/1j*e0", ['E', 'epsilonrac', 'omega'])
-    # add_expression(v, 'Pabse', suffix, ind_vars,
-    #               "omega*conj(E).dot(epsilonrae.dot(E))/1j*e0", ['E', 'epsilonrae', 'omega'])
-    # add_expression(v, 'Pabsi1', suffix, ind_vars,
-    #               "omega*conj(E).dot(epsilonrai[0].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
-    # add_expression(v, 'Pabsi2', suffix, ind_vars,
-    #               "omega*conj(E).dot(epsilonrai[1].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
-    # add_expression(v, 'Pabsi3', suffix, ind_vars,
-    #              "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0", ['E', 'epsilonrai', 'omega'])
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'Nrfr', ["_nref_"+ss])
 
