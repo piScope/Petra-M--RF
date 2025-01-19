@@ -636,11 +636,11 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
     frm = "_lkframe_"+ss
     obj.do_add_scalar_expr(v, suffix, ind_vars, 'Eplus',
                            "(("+frm+".dot(E))[0]/norm("+frm +
-                           "[0])+ 1j*("+frm+".dot(E))[1])/2",
+                           "[0])+ 1j*("+frm+".dot(E))[1])/sqrt(2)",
                            vars=["E"])
     obj.do_add_scalar_expr(v, suffix, ind_vars, 'Eminus',
                            "(("+frm+".dot(E))[0]/norm("+frm +
-                           "[0])- 1j*("+frm+".dot(E))[1])/2",
+                           "[0])- 1j*("+frm+".dot(E))[1])/sqrt(2)",
                            vars=["E"])
     obj.do_add_scalar_expr(v, suffix, ind_vars, 'Ezeta',
                            "("+frm+".dot(E))[2]/norm("+frm+"[2])",
