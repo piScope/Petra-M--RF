@@ -212,9 +212,6 @@ class EM1D(PhysModule):
                     names, names2, self.use_h1_x])
         return val
 
-    def attribute_expr(self):
-        return ["freq"], [float]
-
     def get_default_ns(self):
         from petram.phys.phys_const import mu0, epsilon0, q0, massu, chargez
         ns = {'mu0': mu0,
@@ -224,10 +221,12 @@ class EM1D(PhysModule):
               'chargez': chargez}
 
         return ns
-
+    '''
+    def attribute_expr(self):
+        return ["freq"], [float]
     def attribute_mirror_ns(self):
         return ['freq']
-
+    '''
     def import_panel1_value(self, v):
         v = super(EM1D, self).import_panel1_value(v)
 
