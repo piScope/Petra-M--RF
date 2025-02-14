@@ -20,7 +20,7 @@ import numpy as np
 
 from petram.model import Domain, Bdry, Pair
 from petram.phys.phys_model import Phys, VectorPhysCoefficient, PhysCoefficient
-from petram.phys.em2d.em2d_base import EM2D_Bdry, EM2D_Domain
+from petram.phys.em2d.em2d_base import EM2D_Bdry
 
 import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM2D_H')
@@ -40,7 +40,6 @@ data = (('H', VtableElement('H', type='complex',
 class Ht(VectorPhysCoefficient):
     def __init__(self, *args, **kwargs):
         omega = kwargs.pop('omega', 1.0)
-        from petram.phys.phys_const import mu0, epsilon0, c
         self.fac = -1j*omega  # /mur
         self.nor = None
         super(Ht, self).__init__(*args, **kwargs)
@@ -54,8 +53,6 @@ class Ht(VectorPhysCoefficient):
         return VectorPhysCoefficient.Eval(self, V, T, ip)
 
     def EvalValue(self, x):
-        from petram.phys.phys_const import mu0, epsilon0, c
-
         v = super(Ht, self).EvalValue(x)
         nv = np.cross(self.nor, v)
         nv = self.fac * nv[:2]
@@ -68,7 +65,6 @@ class Ht(VectorPhysCoefficient):
 class Hz(PhysCoefficient):
     def __init__(self, *args, **kwargs):
         omega = kwargs.pop('omega', 1.0)
-        from petram.phys.phys_const import mu0, epsilon0, c
         self.fac = -1j*omega  # /mur
         super(Hz, self).__init__(*args, **kwargs)
 
@@ -81,7 +77,6 @@ class Hz(PhysCoefficient):
         return PhysCoefficient.Eval(self, T, ip)
 
     def EvalValue(self, x):
-        from petram.phys.phys_const import mu0, epsilon0, c
         v = super(Hz, self).EvalValue(x)
 
         nv = np.cross(self.nor, v)
