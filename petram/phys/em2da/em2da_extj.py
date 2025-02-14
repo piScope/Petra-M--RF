@@ -1,6 +1,8 @@
 '''
    external current source
 '''
+from petram.phys.phys_model import PhysCoefficient
+from petram.phys.phys_model import VectorPhysCoefficient
 from petram.phys.vtable import VtableElement, Vtable
 from petram.phys.coefficient import VCoeff, SCoeff
 from petram.mfem_config import use_parallel
@@ -26,9 +28,6 @@ data = (('jext', VtableElement('jext', type='complex',
                                tip="volumetric external current")),)
 
 
-from petram.phys.phys_model  import VectorPhysCoefficient
-from petram.phys.phys_model  import PhysCoefficient
-
 '''
 class rJext_p(VectorPhysCoefficient): # i \omega r Jext_t
    def __init__(self, *args, **kwargs):
@@ -52,10 +51,12 @@ class Jext_t(PhysCoefficient):  # i \omega Jext_phi
        else: return v.imag
 '''
 
+
 def JextCoeff(exprs, ind_vars, l, g, omega):
     fac = 1j * omega
     coeff = VCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
+
 
 def domain_constraints():
     return [EM2Da_ExtJ]
