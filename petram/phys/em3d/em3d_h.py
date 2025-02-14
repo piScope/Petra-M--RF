@@ -9,7 +9,7 @@
     becomes
         \int W \dot (n \times i omega H) d\Omega
 
-    and VectorFEBoundaryTangentLFIntegrator can be used.
+    VectorFEBoundaryTangentLFIntegrator can be used.
 
    CopyRight (c) 2016-  S. Shiraiwa
 ''' 
@@ -41,15 +41,16 @@ data =  (('H', VtableElement('H', type='complex',
 class Ht(VectorPhysCoefficient):
    def __init__(self, *args, **kwargs):
        omega = kwargs.pop('omega', 1.0)
-       self.fac = 1j*omega #/mur
+       self.fac = -1j*omega  # /mur
        super(Ht, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
        v = super(Ht, self).EvalValue(x)
-       v = self.fac * v
-       #dprint1("H ", v , "at", x)
-       if self.real:  return v.real
-       else: return v.imag
+       nv = v*self.fac
+
+       if self.real: return nv.real
+       else: return nv.imag
+
 
 def bdry_constraints():
    return [EM3D_H]
@@ -78,7 +79,4 @@ class EM3D_H(EM3D_Bdry):
         self.add_integrator(engine, 'H', coeff1,
                             b.AddBoundaryIntegrator,
                             mfem.VectorFEBoundaryTangentLFIntegrator)
-        '''
-        coeff1 = self.restrict_coeff(coeff1, engine, vec = True)
-        b.AddBoundaryIntegrator(mfem.VectorFEBoundaryTangentLFIntegrator(coeff1))
         '''

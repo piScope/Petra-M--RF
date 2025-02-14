@@ -1,6 +1,8 @@
 '''
    external current source
 '''
+from petram.phys.phys_model import PhysCoefficient
+from petram.phys.phys_model import VectorPhysCoefficient
 from petram.phys.vtable import VtableElement, Vtable
 from petram.phys.coefficient import VCoeff, SCoeff
 from petram.mfem_config import use_parallel
@@ -25,10 +27,8 @@ data = (('jext', VtableElement('jext', type='complex',
                                default=[0, 0, 0],
                                tip="volumetric external current")),)
 
-'''
-from petram.phys.phys_model  import VectorPhysCoefficient
-from petram.phys.phys_model  import PhysCoefficient
 
+'''
 class rJext_p(VectorPhysCoefficient): # i \omega r Jext_t
    def __init__(self, *args, **kwargs):
        self.omega = kwargs.pop('omega', 1.0)
@@ -101,6 +101,7 @@ class EM2Da_ExtJ(EM2Da_Domain):
                                                     shape=(2, ),
                                                     complex=True,
                                                     dependency=(jext,))
+
                 self.add_integrator(engine, 'jext', coeff1,
                                     b.AddDomainIntegrator,
                                     mfem.VectorFEDomainLFIntegrator)
