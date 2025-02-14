@@ -41,15 +41,28 @@ data =  (('H', VtableElement('H', type='complex',
 class Ht(VectorPhysCoefficient):
    def __init__(self, *args, **kwargs):
        omega = kwargs.pop('omega', 1.0)
-       self.fac = 1j*omega #/mur
+       from petram.phys.phys_const import mu0, epsilon0, c
+       self.fac = -1j*omega  # /mur
+       self.nor = None
        super(Ht, self).__init__(*args, **kwargs)
 
+   def Eval(self, V, T, ip):
+       nor = mfem.Vector(3)
+       mfem.CalcOrtho(T.Jacobian(), nor)
+       tmp = nor.GetDataArray()
+       self.nor = tmp/np.linalg.norm(tmp)
+
+       return VectorPhysCoefficient.Eval(self, V, T, ip)
+
    def EvalValue(self, x):
+       from petram.phys.phys_const import mu0, epsilon0, c
+
        v = super(Ht, self).EvalValue(x)
-       v = self.fac * v
-       #dprint1("H ", v , "at", x)
-       if self.real:  return v.real
-       else: return v.imag
+       nv = np.cross(self.nor, v)
+       nv = self.fac * nv[:2]
+       if self.real: return nv.real
+       else: return nv.imag
+
 
 def bdry_constraints():
    return [EM3D_H]
