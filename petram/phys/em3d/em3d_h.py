@@ -9,7 +9,7 @@
     becomes
         \int W \dot (n \times i omega H) d\Omega
 
-    and VectorFEBoundaryTangentLFIntegrator can be used.
+    VectorFEBoundaryTangentLFIntegrator can be used.
 
    CopyRight (c) 2016-  S. Shiraiwa
 ''' 
