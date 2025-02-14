@@ -3,8 +3,8 @@
 
    (note)
     In MKSA,  1/mu curl E = -dH/dt = i omega H.
-
-    Therefore, surface integral
+ 
+    Therefore, surface integral 
         \int W \dot (n \times 1/mu curl E) d\Omega
     becomes
         \int W \dot (n \times i omega H) d\Omega
@@ -26,70 +26,74 @@ import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM2D_H')
 
 if use_parallel:
-   import mfem.par as mfem
+    import mfem.par as mfem
 else:
-   import mfem.ser as mfem
+    import mfem.ser as mfem
 
 data = (('H', VtableElement('H', type='complex',
-                             guilabel='H',
-                             suffix=('x', 'y', 'z'),
-                             default=[0, 0, 0],
-                             tip="magnetic field")),)
+                            guilabel='H',
+                            suffix=('x', 'y', 'z'),
+                            default=[0, 0, 0],
+                            tip="magnetic field")),)
 
 
 class Ht(VectorPhysCoefficient):
-   def __init__(self, *args, **kwargs):
-       omega = kwargs.pop('omega', 1.0)
-       from petram.phys.phys_const import mu0, epsilon0, c
-       self.fac = -1j*omega  # /mur
-       self.nor = None
-       super(Ht, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        omega = kwargs.pop('omega', 1.0)
+        from petram.phys.phys_const import mu0, epsilon0, c
+        self.fac = -1j*omega  # /mur
+        self.nor = None
+        super(Ht, self).__init__(*args, **kwargs)
 
-   def Eval(self, V, T, ip):
-       nor = mfem.Vector(2)
-       mfem.CalcOrtho(T.Jacobian(), nor)
-       tmp = np.hstack([nor.GetDataArray(), 0.0])
-       self.nor = tmp/np.linalg.norm(tmp)
+    def Eval(self, V, T, ip):
+        nor = mfem.Vector(2)
+        mfem.CalcOrtho(T.Jacobian(), nor)
+        tmp = np.hstack([nor.GetDataArray(), 0.0])
+        self.nor = tmp/np.linalg.norm(tmp)
 
-       return VectorPhysCoefficient.Eval(self, V, T, ip)
+        return VectorPhysCoefficient.Eval(self, V, T, ip)
 
-   def EvalValue(self, x):
-       from petram.phys.phys_const import mu0, epsilon0, c
+    def EvalValue(self, x):
+        from petram.phys.phys_const import mu0, epsilon0, c
 
-       v = super(Ht, self).EvalValue(x)
-       nv = np.cross(self.nor, v)
-       nv = self.fac * nv[:2]
-       if self.real: return nv.real
-       else: return nv.imag
+        v = super(Ht, self).EvalValue(x)
+        nv = np.cross(self.nor, v)
+        nv = self.fac * nv[:2]
+        if self.real:
+            return nv.real
+        else:
+            return nv.imag
 
 
 class Hz(PhysCoefficient):
-   def __init__(self, *args, **kwargs):
-       omega = kwargs.pop('omega', 1.0)
-       from petram.phys.phys_const import mu0, epsilon0, c
-       self.fac = -1j*omega  # /mur
-       super(Hz, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        omega = kwargs.pop('omega', 1.0)
+        from petram.phys.phys_const import mu0, epsilon0, c
+        self.fac = -1j*omega  # /mur
+        super(Hz, self).__init__(*args, **kwargs)
 
-   def Eval(self, T, ip):
-       nor = mfem.Vector(2)
-       mfem.CalcOrtho(T.Jacobian(), nor)
-       tmp = np.hstack([nor.GetDataArray(), 0.0])
-       self.nor = tmp/np.linalg.norm(tmp)
+    def Eval(self, T, ip):
+        nor = mfem.Vector(2)
+        mfem.CalcOrtho(T.Jacobian(), nor)
+        tmp = np.hstack([nor.GetDataArray(), 0.0])
+        self.nor = tmp/np.linalg.norm(tmp)
 
-       return PhysCoefficient.Eval(self, T, ip)
+        return PhysCoefficient.Eval(self, T, ip)
 
-   def EvalValue(self, x):
-       from petram.phys.phys_const import mu0, epsilon0, c
-       v = super(Hz, self).EvalValue(x)
+    def EvalValue(self, x):
+        from petram.phys.phys_const import mu0, epsilon0, c
+        v = super(Hz, self).EvalValue(x)
 
-       nv = np.cross(self.nor, v)
-       nv = self.fac * nv[2]
-       if self.real: return nv.real
-       else: return nv.imag
+        nv = np.cross(self.nor, v)
+        nv = self.fac * nv[2]
+        if self.real:
+            return nv.real
+        else:
+            return nv.imag
 
 
 def bdry_constraints():
-   return [EM2D_H]
+    return [EM2D_H]
 
 
 class EM2D_H(EM2D_Bdry):
@@ -115,9 +119,10 @@ class EM2D_H(EM2D_Bdry):
                         real=real, omega=omega)
             self.add_integrator(engine, 'H', coeff1,
                                 b.AddBoundaryIntegrator,
+                                mfem.VectorFEDomainLFIntegrator)
 
         else:
-            coeff1=Hz(h[0],  self.get_root_phys().ind_vars,
+            coeff1 = Hz(h[0],  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
                         real=real, omega=omega)
             self.add_integrator(engine, 'H', coeff1,

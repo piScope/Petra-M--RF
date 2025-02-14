@@ -43,23 +43,14 @@ class Ht(VectorPhysCoefficient):
        omega = kwargs.pop('omega', 1.0)
        from petram.phys.phys_const import mu0, epsilon0, c
        self.fac = -1j*omega  # /mur
-       self.nor = None
        super(Ht, self).__init__(*args, **kwargs)
-
-   def Eval(self, V, T, ip):
-       nor = mfem.Vector(3)
-       mfem.CalcOrtho(T.Jacobian(), nor)
-       tmp = nor.GetDataArray()
-       self.nor = tmp/np.linalg.norm(tmp)
-
-       return VectorPhysCoefficient.Eval(self, V, T, ip)
 
    def EvalValue(self, x):
        from petram.phys.phys_const import mu0, epsilon0, c
 
        v = super(Ht, self).EvalValue(x)
-       nv = np.cross(self.nor, v)
-       nv = self.fac * nv[:2]
+       nv = v*self.fac
+
        if self.real: return nv.real
        else: return nv.imag
 

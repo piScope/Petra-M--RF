@@ -25,7 +25,7 @@ data = (('jext', VtableElement('jext', type='complex',
                                default=[0, 0, 0],
                                tip="volumetric external current")),)
 
-'''
+
 from petram.phys.phys_model  import VectorPhysCoefficient
 from petram.phys.phys_model  import PhysCoefficient
 
@@ -50,13 +50,11 @@ class Jext_t(PhysCoefficient):  # i \omega Jext_phi
        if self.real:  return v.real
        else: return v.imag
 '''
-
-
 def JextCoeff(exprs, ind_vars, l, g, omega):
     fac = 1j * omega
     coeff = VCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
-
+'''
 
 def domain_constraints():
     return [EM2Da_ExtJ]
@@ -92,7 +90,7 @@ class EM2Da_ExtJ(EM2Da_Domain):
                 return jext[1]
 
             if kfes == 0:
-                '''
+
                 coeff1 = rJext_p(2, f_name[0],  self.get_root_phys().ind_vars,
                             self._local_ns, self._global_ns,
                             real = real, omega = omega)
@@ -101,17 +99,18 @@ class EM2Da_ExtJ(EM2Da_Domain):
                                                     shape=(2, ),
                                                     complex=True,
                                                     dependency=(jext,))
+                '''
                 self.add_integrator(engine, 'jext', coeff1,
                                     b.AddDomainIntegrator,
                                     mfem.VectorFEDomainLFIntegrator)
             else:
-                '''
                 coeff1 = Jext_t(f_name[0],  self.get_root_phys().ind_vars,
                             self._local_ns, self._global_ns,
                             real = real, omega = omega)
                 '''
                 coeff1 = func_to_numba_coeff_scalar(jext_t, complex=True,
                                                     dependency=(jext,))
+                '''
                 self.add_integrator(engine, 'jext', coeff1,
                                     b.AddDomainIntegrator,
                                     mfem.DomainLFIntegrator)
