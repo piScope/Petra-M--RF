@@ -41,13 +41,10 @@ data =  (('H', VtableElement('H', type='complex',
 class Ht(VectorPhysCoefficient):
    def __init__(self, *args, **kwargs):
        omega = kwargs.pop('omega', 1.0)
-       from petram.phys.phys_const import mu0, epsilon0, c
        self.fac = -1j*omega  # /mur
        super(Ht, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
-       from petram.phys.phys_const import mu0, epsilon0, c
-
        v = super(Ht, self).EvalValue(x)
        nv = v*self.fac
 
@@ -82,7 +79,4 @@ class EM3D_H(EM3D_Bdry):
         self.add_integrator(engine, 'H', coeff1,
                             b.AddBoundaryIntegrator,
                             mfem.VectorFEBoundaryTangentLFIntegrator)
-        '''
-        coeff1 = self.restrict_coeff(coeff1, engine, vec = True)
-        b.AddBoundaryIntegrator(mfem.VectorFEBoundaryTangentLFIntegrator(coeff1))
         '''
