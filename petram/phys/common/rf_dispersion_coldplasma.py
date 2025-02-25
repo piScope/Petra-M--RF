@@ -50,7 +50,8 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
 stix_options = ("SDP", "SD", "SP", "DP", "P", "w/o xx", "None")
 default_stix_option = "(default) include all"
 
-col_model_options = ["w/o col.", "Tc", "wcol"]
+col_model_options = ["w/o col.", "Tc", "wcol",
+                     "Tc (col. only)", "wcol (col. only)"]
 default_col_model = col_model_options[1]
 
 
@@ -123,8 +124,12 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
                 omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
             return out
 
-    def mur(ptx):
-        return mu0*np.eye(3, dtype=np.complex128)
+    if col_model > 2:
+        def mur(ptx):
+            return 10000.*mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(ptx):
+            return mu0*np.eye(3, dtype=np.complex128)
 
     def sigma(ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
@@ -178,7 +183,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
     #                                                               epsilonr_pl_cold,
     #                                                               epsilonr_pl_cold_generic,
     #                                                               f_collisions)
-    #from petram.phys.common.rf_plasma_wc_wp import wpesq, wpisq, wce, wci
+    # from petram.phys.common.rf_plasma_wc_wp import wpesq, wpisq, wce, wci
 
     Da = 1.66053906660e-27      # atomic mass unit (u or Dalton) (kg)
 
@@ -258,6 +263,13 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
             out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
                 omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
             return (out - out.transpose().conj())/2.0
+
+    if col_model > 2:
+        def mur(*_ptx):
+            return 100000.*mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(*_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)
 
     def mur(*_ptx):
         return mu0*np.eye(3, dtype=np.complex128)

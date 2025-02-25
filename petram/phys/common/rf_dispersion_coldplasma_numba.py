@@ -1,23 +1,24 @@
-import petram.debug as debug
-dprint1, dprint2, dprint3 = debug.init_dprints('RF_DISPERSION_COLDPLASMA_NUMBA')
-
-from numba import njit, void, int32, int64, float64, complex128, types
+from petram.phys.phys_const import mass_electron as me
+from petram.phys.phys_const import q0 as q_base
+from petram.phys.phys_const import epsilon0 as e0
+import logging
+import numpy as np
 from numpy import (pi, sin, cos, exp, sqrt, log, arctan2, cross,
                    max, array, linspace, conj, transpose, arccos,
                    sum, zeros, dot, array, ascontiguousarray)
-import numpy as np
+from numba import njit, void, int32, int64, float64, complex128, types
+import petram.debug as debug
+dprint1, dprint2, dprint3 = debug.init_dprints(
+    'RF_DISPERSION_COLDPLASMA_NUMBA')
+
 
 # slience log message
 dprint1("Importing numba routines")
-import logging
 numba_logger = logging.getLogger('numba')
 numba_clevel = numba_logger.level
 numba_logger.setLevel(logging.WARNING)
 
 # vacuum permittivity
-from petram.phys.phys_const import epsilon0 as e0
-from petram.phys.phys_const import q0 as q_base
-from petram.phys.phys_const import mass_electron as me
 
 
 qe = -q_base
@@ -133,16 +134,15 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
     P = 1 + 0j
     D = 0j
 
-    if col_model not in [0, 2]:
+    if col_model in [1, 3]:
         nu_eis = f_collisions(denses, charges, Te, ne)
     else:
         nu_eis = np.array([0.]*len(masses))
 
     if ne > 0.:
         if col_model == 0:
-            wcol = Te
             Se, Pe, De = SPD_el_b(w, b_norm, ne, 0.)
-        elif col_model == 2:
+        elif col_model == 2 or col_model == 4:
             wcol = Te
             Se, Pe, De = SPD_el_b(w, b_norm, ne, wcol)
         else:
@@ -155,7 +155,7 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
         if dens > 0.:
             if col_model == 0:
                 Si, Pi, Di = SPD_ion_b(w, b_norm, dens, mass, charge, 0)
-            elif col_model == 2:
+            elif col_model == 2 or col_model == 4:
                 wcol = Te
                 Si, Pi, Di = SPD_ion_b(w, b_norm, dens, mass, charge, wcol)
             else:
@@ -166,6 +166,9 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
     M = array([[S,   -1j*D, 0j],
                [1j*D, S,    0j],
                [0j,   0j,   P]])
+
+    if col_model == 3 or col_model == 4:
+        M = 0.5 * (M - M.conj().transpose())
     return M
 
 
@@ -178,7 +181,7 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
     '''
 
     b_norm = sqrt(B[0]**2+B[1]**2+B[2]**2)
-    if col_model not in [0, 2]:
+    if col_model in [1, 3]:
         nu_eis = f_collisions(denses, charges, Te, ne)
     else:
         nu_eis = np.array([0.]*len(masses))
@@ -190,7 +193,7 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
     if ne > 0.:
         if col_model == 0:
             S, P, D = SPD_el_b(w, b_norm, ne, 0.)
-        elif col_model == 2:
+        elif col_model == 2 or col_model == 4:
             wcol = Te
             S, P, D = SPD_el_b(w, b_norm, ne, wcol)
         else:
@@ -223,13 +226,13 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
         if dens > 0.:
             if col_model == 0:
                 S, P, D = SPD_ion_b(w, b_norm, dens, mass, charge, 0.0)
-            elif col_model == 2:
+            elif col_model == 2 or col_model == 4:
                 wcol = Te
                 S, P, D = SPD_ion_b(w, b_norm, dens, mass, charge, wcol)
             else:
                 S, P, D = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
 
-            #S, P, D = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
+            # S, P, D = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
             if terms[kion] == 0:
                 M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., P]])
 
@@ -253,6 +256,9 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
             M += M2
 
         kion = kion + 1
+
+    if col_model == 3 or col_model == 4:
+        M = 0.5 * (M - M.conj().transpose())
 
     return M
 
@@ -318,7 +324,7 @@ def rotate_dielectric(B, M):
 
     print(np.sum(np.abs(ans-ans2)))
     '''
-    #print(ans, ans2)
+    # print(ans, ans2)
 
     return ans
 

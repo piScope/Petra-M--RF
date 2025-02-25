@@ -14,6 +14,9 @@ from petram.phys.vtable import VtableElement, Vtable
 
 from petram.phys.phys_const import c as speed_of_light
 
+from petram.phys.common.rf_dispersion_coldplasma import col_model_options as opts
+col_model_options = opts[:3]
+
 if use_parallel:
     import mfem.par as mfem
     from mpi4py import MPI
@@ -451,7 +454,6 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
     kpe_alg = getattr(
         petram.phys.common.rf_dispersion_lkplasma_numba, "eval_kpe_"+kpe_alg)
 
-    from petram.phys.common.rf_dispersion_coldplasma import col_model_options
     col_model = col_model_options.index(col_model)
 
     params = {'omega': omega, 'masses': masses, 'charges': charges, 'nhrms': 20,
@@ -544,7 +546,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
     import petram.phys.common.rf_dispersion_lkplasma_numba
     kpe_alg = getattr(
         petram.phys.common.rf_dispersion_lkplasma_numba, "eval_kpe_"+kpe_alg)
-    from petram.phys.common.rf_dispersion_coldplasma import col_model_options
+
     col_model = col_model_options.index(col_model)
     params = {'omega': omega, 'masses': masses, 'charges': charges, 'nhrms': 20,
               'c': speed_of_light, "kpe_mode": kpe_options.index(kpe_mode),
