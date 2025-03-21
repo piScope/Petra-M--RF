@@ -136,7 +136,7 @@ def make_functions():
                                                                  eval_npara_nperp,
                                                                  rotate_dielectric)
 
-    def epsilonr(_ptx, B, t_c, dens_e, t_e, dens_i, t_i, kpakpe, kpevec):
+    def epsilon(_ptx, B, t_c, dens_e, t_e, dens_i, t_i, kpakpe, kpevec):
         e_cold = epsilonr_pl_cold_std(
             omega, B, dens_i, masses, charges, t_c, dens_e, col_model)
 
@@ -174,7 +174,7 @@ def make_functions():
     def sigma(_ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
 
-    return epsilonr, sdp, mur, sigma
+    return epsilon, sdp, mur, sigma
 
 #
 #  functions for variables
@@ -469,7 +469,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
     if kzmode is not None:
         params["kzmode"] = kzmode
 
-    epsilonr, sdp, mur, sigma = make_functions()
+    epsilon, sdp, mur, sigma = make_functions()
 
     numba_debug = False if myid != 0 else get_numba_debug()
 
@@ -480,7 +480,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
 
     jitter = mfem.jit.matrix(sdim=sdim, shape=(3, 3), complex=True, params=params,
                              debug=numba_debug, dependency=dependency)
-    mfem_coeff1 = jitter(epsilonr)
+    mfem_coeff1 = jitter(epsilon)
 
     jitter2 = mfem.jit.matrix(sdim=sdim, shape=(3, 3), complex=True, params=params,
                               debug=numba_debug)
@@ -526,11 +526,11 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
                                          PyFunctionVariable)
     d1 = variable.jit.float(dependency=("dens_smooth",))(func)
 
-    def make_variable(x):
+    def make_variable(x, dtype=None):
         if isinstance(x, str):
             d1 = ExpressionVariable(x, ind_vars, gns=g_ns)
         else:
-            d1 = Constant(x)
+            d1 = Constant(x, dtype=dtype)
         return d1
 
     B_var = make_variable(B)
@@ -540,8 +540,8 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
     dense_var = make_variable(dens_e)
     densi_var = make_variable(dens_i)
 
-    kpakpe_var = make_variable(kpakpe)
-    kpevec_var = make_variable(kpevec)
+    kpakpe_var = make_variable(kpakpe, dtype=np.float64)
+    kpevec_var = make_variable(kpevec, dtype=np.float64)
 
     import petram.phys.common.rf_dispersion_lkplasma_numba
     kpe_alg = getattr(
@@ -662,6 +662,9 @@ def add_domain_variables_common(obj, ret, v, suffix, ind_vars):
                            vars=['E', 'epsilonrai', 'omega'],)
     obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi3",
                            "omega*conj(E).dot(epsilonrai[2].dot(E))/1j*e0",
+                           vars=['E', 'epsilonrai', 'omega'],)
+    obj.do_add_scalar_expr(v, suffix, ind_vars, "Pabsi4",
+                           "omega*conj(E).dot(epsilonrai[3].dot(E))/1j*e0",
                            vars=['E', 'epsilonrai', 'omega'],)
 
     obj.do_add_matrix_expr(v, suffix, ind_vars, 'Nrfr', ["_nref_"+ss])

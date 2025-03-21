@@ -297,7 +297,7 @@ def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, npe
                     [tmp[3], -tmp[4], tmp[5]], ])
 
         M += M2
-        icount += 1
+    icount += 1
 
     for Ti, dens, mass, charge in zip(temps, denses, masses, charges):
         ti_kev = Ti/1000.
