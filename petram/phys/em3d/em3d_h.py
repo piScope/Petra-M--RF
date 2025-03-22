@@ -79,4 +79,3 @@ class EM3D_H(EM3D_Bdry):
         self.add_integrator(engine, 'H', coeff1,
                             b.AddBoundaryIntegrator,
                             mfem.VectorFEBoundaryTangentLFIntegrator)
-        '''
