@@ -85,5 +85,5 @@ def ask_rf_stix_terms(win, num_ions, value):
             pass
     finally:
         dlg.Destroy()
-    print(value)
+
     return value
