@@ -47,6 +47,14 @@ class EM3D_LocalKPlasma(EM3D_Domain):
     vt = Vtable(vtable_data)
     # nlterms = ['epsilonr']
 
+    @classmethod
+    def fancy_menu_name(cls):
+        return "HotPlasma(local-k)"
+
+    @classmethod
+    def fancy_tree_name(cls):
+        return "LocalKPlasma"
+
     def get_possible_child(self):
         from .em3d_pml import EM3D_LinearPML
         return [EM3D_LinearPML]
