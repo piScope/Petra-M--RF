@@ -222,7 +222,6 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms,
 
     icount = 0
     if ne > 0.:
-        print(terms[icount, :])
         if col_model == 0:
             S, P, D = SPD_el_b(w, b_norm, ne, 0.)
         elif col_model == 2 or col_model == 4:
@@ -236,7 +235,6 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms,
 
     icount = 1
     for dens, mass, charge, nu_ei in zip(denses, masses, charges, nu_eis):
-        print(terms[icount, :])
         if dens > 0.:
             if col_model == 0:
                 S, P, D = SPD_ion_b(w, b_norm, dens, mass, charge, 0.0)
