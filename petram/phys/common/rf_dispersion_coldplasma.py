@@ -119,7 +119,6 @@ def panelvalue2value(panelvalue):
 
 def value2panelstr(value):
     value_split = value.split('\n')
-    print(value)
 
     for l in value_split[:-1]:
         if len(l.split(",")) != len(stix_options)+1:
