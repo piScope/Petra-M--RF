@@ -3,7 +3,9 @@ import wx
 from ifigure.utils.edit_list import EditListPanel, EDITLIST_CHANGED
 
 from petram.phys.common.rf_dispersion_coldplasma import (stix_options,
-                                                         default_stix_option)
+                                                         default_stix_option,
+                                                         value2panelvalue,
+                                                         panelvalue2value)
 
 
 def elp_setting(num_ions):
@@ -15,8 +17,9 @@ def elp_setting(num_ions):
 
     panels = []
     for n in names:
-        panels.append([n, None, 1, {"values": stix_options}])
-
+        panels.append([n, None, 36, {"col": 5,
+                                     "labels": stix_options}])
+    panels.append([None, True, 3, {"text": "include eye(3) contribution"}])
     return panels
 
 
@@ -70,37 +73,6 @@ class dlg_rf_stix_terms(wx.Dialog):
         evt.Skip()
 
 
-def value2panelvalue(num_ions, value):
-    if value == default_stix_option:
-        return [stix_options[0]]*(num_ions+1)
-
-    panelvalue = [x.split(":")[-1].strip() for x in value.split(",")]
-
-    # check if current option is among supported options
-    for x in panelvalue:
-        if x not in stix_options:
-             return [stix_options[0]]*(num_ions+1)
-    return panelvalue
-
-def panelvalue2value(panelvalue):
-    num_ions = len(panelvalue) - 1
-    names = ["electrons"]
-    for i in range(num_ions):
-        names.append("ions"+str(i+1))
-
-    check = True
-
-    vv = []
-    for n, v in zip(names, panelvalue):
-        if v != stix_options[0]:
-            check = False
-        vv.append(n+":"+v)
-
-    if check:
-        return default_stix_option
-    return ", ".join(vv)
-
-
 def ask_rf_stix_terms(win, num_ions, value):
     panelvalue = value2panelvalue(num_ions, value)
     dlg = dlg_rf_stix_terms(win, num_ions, panelvalue)
@@ -113,4 +85,5 @@ def ask_rf_stix_terms(win, num_ions, value):
             pass
     finally:
         dlg.Destroy()
+    print(value)
     return value

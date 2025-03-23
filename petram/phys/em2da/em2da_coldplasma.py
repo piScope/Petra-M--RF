@@ -95,7 +95,8 @@ class EM2Da_ColdPlasma(EM2Da_Domain):
         self.stix_terms = value
 
     def stix_terms_str(self):
-        return self.stix_terms
+        from petram.phys.common.rf_dispersion_coldplasma import value2panelstr
+        return value2panelstr(self.stix_terms)
 
     def panel1_param(self):
         panels = super(EM2Da_ColdPlasma, self).panel1_param()

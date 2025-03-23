@@ -47,23 +47,110 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
                                            no_func=True,
                                            tip="ion charges normalized by q(=1.60217662e-19 [C])")), ]
 
-stix_options = ("SDP", "SD", "SP", "DP", "P", "w/o xx", "None")
-default_stix_option = "(default) include all"
+stix_options = ["S(xx/yy)", "D(xy/yx)", "P(zz)",
+                "Prop.(H)", "Abs.(A)"]
+default_stix_option = [(x, True) for x in stix_options[:]]
 
-col_model_options = ["w/o col.", "Tc", "wcol",
-                     "Tc (col. only)", "wcol (col. only)"]
+col_model_options = ["w/o col.", "Tc", "wcol", ]
 default_col_model = col_model_options[1]
 
+#
+# routine for processing contribution panel data
+#
 
-def value2int(num_ions, value):
-    '''
-    GUI value to interger
-    '''
-    if value == default_stix_option:
-        return [0]*(num_ions+1)
 
-    panelvalue = [x.split(":")[-1].strip() for x in value.split(",")]
-    return [stix_options.index(x) for x in panelvalue]
+def value2panelvalue(num_ions, value):
+    if value is None:
+        return [[x[1] for x in default_stix_option]]*(num_ions+1) + [1]
+
+    # check if value matches with expected format
+    value_split = value.split('\n')
+    for l in value_split[:-1]:
+        if len(l.split(",")) != len(stix_options)+1:
+            return [[x[1] for x in default_stix_option]]*(num_ions+1) + [1]
+
+    try:
+        include_eye3 = int(value_split[-1])
+    except:
+        include_eye3 = 1
+
+    value = '\n'.join(value_split[:-1])
+    names = [xx.split(',')[0] for xx in value.split("\n")]
+    opts = [[x.split(":")[0].strip() for x in xx.split(',')[1:]]
+            for xx in value.split("\n")]
+    tmp = [[bool(int(x.split(":")[-1])) for x in xx.split(',')[1:]]
+           for xx in value.split("\n")]
+
+    panelvalue = [[x[1] for x in default_stix_option]]*(num_ions+1)
+
+    for i, x in enumerate(tmp):
+        if opts[i] != stix_options:
+            continue
+        if i == 0:
+            name = 'electrons'
+        else:
+            name = 'ions'+str(i)
+
+        if names[i] != name:
+            continue
+        panelvalue[i] = x
+
+    return panelvalue + [bool(include_eye3)]
+
+
+def value2flags(num_ions, value):
+    tmp = value2panelvalue(num_ions, value)
+    return tmp[-1], np.array(tmp[:-1]).astype(np.int32)
+
+
+def panelvalue2value(panelvalue):
+    txt = list()
+    for i, x in enumerate(panelvalue[:-1]):
+        if i == 0:
+            name = 'electrons'
+        else:
+            name = 'ions'+str(i)
+        txt.append(name+','+', '.join([xx[0]+":"+str(int(xx[1])) for xx in x]))
+
+    txt.append(str(int(panelvalue[-1])))
+
+    return "\n".join(txt)
+
+
+def value2panelstr(value):
+    value_split = value.split('\n')
+    print(value)
+
+    for l in value_split[:-1]:
+        if len(l.split(",")) != len(stix_options)+1:
+            return value
+
+    try:
+        include_eye3 = int(value_split[-1])
+    except:
+        include_eye3 = 1
+
+    value = '\n'.join(value_split[:-1])
+    names = [xx.split(',')[0] for xx in value.split("\n")]
+    opts = [[x.split(":")[0].strip() for x in xx.split(',')[1:]]
+            for xx in value.split("\n")]
+    tmp = [[bool(int(x.split(":")[-1])) for x in xx.split(',')[1:]]
+           for xx in value.split("\n")]
+
+    txt = []
+    for x, n, o in zip(tmp, names, opts):
+        if all(x):
+            txt.append(n + " : default")
+        else:
+            tt = ','.join([oo for oo, xx in zip(o, x) if xx])
+            txt.append(n + " : " + tt)
+    if not include_eye3:
+        txt.append("Vacuum contribution (eye3) is not included.")
+    return '\n'.join(txt)
+
+#
+# build compiled function for assembly
+#
 
 
 def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges, col_model,
@@ -94,10 +181,12 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
                           return_complex=False, return_mfem_constant=True)
 
     col_model = col_model_options.index(col_model)
+    terms = value2flags(len(charges), terms)
     params = {'omega': omega, 'masses': masses, 'charges': charges,
-              'col_model': col_model}
+              'col_model': col_model,
+              'sterms': terms[1], 'use_eye3': np.int32(terms[0])}
 
-    if terms == default_stix_option:
+    """
         def epsilonr(ptx, B, dens_e, t_e, dens_i):
             e_cold = epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
@@ -110,19 +199,16 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
             return out
 
     else:
-        terms = value2int(len(charges), terms)
-        terms = np.array(terms, dtype=np.int32)
-        params["sterms"] = terms
+    """
+    def epsilonr(ptx, B, dens_e, t_e, dens_i):
+        out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, use_eye3, col_model)
+        return out
 
-        def epsilonr(ptx, B, dens_e, t_e, dens_i):
-            out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
-                omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
-            return out
-
-        def sdp(ptx, B, dens_e, t_e, dens_i):
-            out = epsilonr_pl_cold_g(
-                omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
-            return out
+    def sdp(ptx, B, dens_e, t_e, dens_i):
+        out = epsilonr_pl_cold_g(
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, 1, col_model)
+        return out
 
     if col_model > 2:
         def mur(ptx):
@@ -217,10 +303,13 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
     densi_var = make_variable(dens_i)
 
     col_model = col_model_options.index(col_model)
-    params = {'omega': omega, 'masses': masses,
-              'charges': charges, 'col_model': col_model, 'pcomm': pcomm}
+    terms = value2flags(len(charges), terms)
 
-    if terms == default_stix_option:
+    params = {'omega': omega, 'masses': masses,
+              'charges': charges, 'col_model': col_model, 'pcomm': pcomm,
+              'sterms': terms[1], 'use_eye3': np.int32(terms[0])}
+
+    """
         def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
             from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold
 
@@ -239,30 +328,26 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
             out = -epsilon0 * omega * omega*epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
             return (out - out.transpose().conj())/2.0
+    """
 
-    else:
-        terms = value2int(len(charges), terms)
-        terms = np.array(terms, dtype=np.int32)
-        params["sterms"] = terms
+    def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+        from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
 
-        def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
-            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
+        out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, use_eye3,  col_model)
+        return out
 
-            out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
-                omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
-            return out
+    def sdp(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+        from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_g
+        out = epsilonr_pl_cold_g(
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, 1, col_model)
+        return out
 
-        def sdp(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
-            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_g
-            out = epsilonr_pl_cold_g(
-                omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
-            return out
-
-        def epsilonrac(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
-            from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
-            out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
-                omega, B, dens_i, masses, charges, t_e, dens_e, sterms, col_model)
-            return (out - out.transpose().conj())/2.0
+    def epsilonrac(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
+        from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_generic
+        out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, use_eye3, col_model)
+        return (out - out.transpose().conj())/2.0
 
     if col_model > 2:
         def mur(*_ptx):
