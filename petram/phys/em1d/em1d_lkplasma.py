@@ -61,6 +61,14 @@ class EM1D_LocalKPlasma(EM1D_Vac):
         super(EM1D_LocalKPlasma, self).__init__(**kargs)
         self._jited_coeff = None
 
+    @classmethod
+    def fancy_menu_name(cls):
+        return "HotPlasma(local-k)"
+
+    @classmethod
+    def fancy_tree_name(cls):
+        return "LocalKPlasma"
+
     def get_possible_child(self):
         return []
 
