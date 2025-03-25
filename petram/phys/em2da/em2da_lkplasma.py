@@ -65,7 +65,7 @@ class EM2Da_LocalKPlasma(EM2Da_Domain):
 
     @classmethod
     def fancy_menu_name(cls):
-        return "HotPlasma(loal-k)"
+        return "HotPlasma(local-k)"
 
     @classmethod
     def fancy_tree_name(cls):

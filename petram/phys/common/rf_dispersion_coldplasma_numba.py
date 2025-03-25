@@ -25,6 +25,7 @@ qe = -q_base
 
 
 iarray_ro = types.Array(int32, 1, 'C', readonly=True)
+iarray2_ro = types.Array(int32, 2, 'C', readonly=True)
 darray_ro = types.Array(float64, 1, 'C', readonly=True)
 
 
@@ -172,8 +173,32 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
     return M
 
 
-@njit(complex128[:, ::1](float64, float64[:], float64[:], darray_ro, iarray_ro, float64, float64, iarray_ro, int32))
-def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
+@njit(complex128[:](complex128, complex128, complex128, iarray_ro))
+def adjust_terms(S, P, D, terms):
+
+    if not terms[0]:       # S
+        S *= 0.
+    if not terms[1]:       # D
+        D *= 0.
+    if not terms[2]:       # P
+        P *= 0.
+
+    if not terms[4]:
+        S = S.imag
+        P = P.imag
+        D = D.imag
+    if not terms[5]:
+        S = S.real
+        P = P.real
+        D = D.real
+    ret = np.array([S, P, D])
+    return ret
+
+
+@njit(complex128[:, ::1](float64, float64[:], float64[:], darray_ro, iarray_ro,
+                         float64, float64, iarray2_ro, int32, int32))
+def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms,
+                       use_eye3, col_model):
     '''
     generalized Stix tensor
     terms defined in rf_dispersion_coldplasma
@@ -186,10 +211,16 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
     else:
         nu_eis = np.array([0.]*len(masses))
 
-    M = array([[1.+0j,   0., 0.],
-               [0.,   1.+0j, 0.j],
-               [0.,   0.,    1.+0j]])
+    if use_eye3:
+        M = array([[1.+0j,   0., 0.],
+                   [0.,   1.+0j, 0.j],
+                   [0.,   0.,    1.+0j]])
+    else:
+        M = array([[0.+0j,   0., 0.],
+                   [0.,   0.+0j, 0.j],
+                   [0.,   0.,    0.+0j]])
 
+    icount = 0
     if ne > 0.:
         if col_model == 0:
             S, P, D = SPD_el_b(w, b_norm, ne, 0.)
@@ -198,30 +229,11 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
             S, P, D = SPD_el_b(w, b_norm, ne, wcol)
         else:
             S, P, D = SPD_el(w, b_norm, ne, nu_eis)
-
-        if terms[0] == 0:
-            M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., P]])
-
-        elif terms[0] == 1:
-            M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., 0j]])
-
-        elif terms[0] == 2:
-            M2 = array([[S, 0j, 0j], [0j, S, 0j], [0., 0., P]])
-
-        elif terms[0] == 3:
-            M2 = array([[0j, -1j*D, 0j], [1j*D, 0j, 0j], [0., 0., P]])
-
-        elif terms[0] == 4:
-            M2 = array([[0j, 0j, 0j], [0j, 0j, 0j], [0j, 0., P]])
-
-        elif terms[0] == 5:
-            M2 = array([[0j, -1j*D, 0j], [1j*D, S, 0j], [0j, 0., P]])
-
-        else:
-            M2 = array([[0j, 0j, 0j], [0j, 0j, 0j], [0., 0., 0j]])
+        S, P, D = adjust_terms(S, P, D, terms[icount, :])
+        M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., P]])
         M += M2
 
-    kion = 1
+    icount = 1
     for dens, mass, charge, nu_ei in zip(denses, masses, charges, nu_eis):
         if dens > 0.:
             if col_model == 0:
@@ -233,32 +245,11 @@ def epsilonr_pl_cold_g(w, B, denses, masses, charges, Te, ne, terms, col_model):
                 S, P, D = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
 
             # S, P, D = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
-            if terms[kion] == 0:
-                M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., P]])
-
-            elif terms[kion] == 1:
-                M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., 0j]])
-
-            elif terms[kion] == 2:
-                M2 = array([[S, 0j, 0j], [0j, S, 0j], [0., 0., P]])
-
-            elif terms[kion] == 3:
-                M2 = array([[0j, -1j*D, 0j], [1j*D, 0j, 0j], [0., 0., P]])
-
-            elif terms[kion] == 4:
-                M2 = array([[0j, 0j, 0j], [0j, 0j, 0j], [0j, 0., P]])
-
-            elif terms[kion] == 5:
-                M2 = array([[0j, -1j*D, 0j], [1j*D, S, 0j], [0j, 0., P]])
-
-            else:
-                M2 = array([[0j, 0j, 0j], [0j, 0j, 0j], [0., 0., 0j]])
+            S, P, D = adjust_terms(S, P, D, terms[icount, :])
+            M2 = array([[S, -1j*D, 0j], [1j*D, S, 0j], [0., 0., P]])
             M += M2
 
-        kion = kion + 1
-
-    if col_model == 3 or col_model == 4:
-        M = 0.5 * (M - M.conj().transpose())
+        icount = icount + 1
 
     return M
 
@@ -338,13 +329,13 @@ def epsilonr_pl_cold(w, B, denses, masses, charges, Te, ne, col_model):
     return rotate_dielectric(B, M)
 
 
-@njit(complex128[:, :](float64, float64[:], float64[:], darray_ro, iarray_ro, float64, float64, iarray_ro, int32))
-def epsilonr_pl_cold_generic(w, B, denses, masses, charges, Te, ne, terms, col_model):
+@njit(complex128[:, :](float64, float64[:], float64[:], darray_ro, iarray_ro, float64, float64, iarray2_ro, int32, int32))
+def epsilonr_pl_cold_generic(w, B, denses, masses, charges, Te, ne, terms, use_eye3, col_model):
     '''
     standard SPD stix
     '''
     M = epsilonr_pl_cold_g(w, B, denses, masses,
-                           charges, Te, ne, terms, col_model)
+                           charges, Te, ne, terms, use_eye3, col_model)
 
     return rotate_dielectric(B, M)
 
