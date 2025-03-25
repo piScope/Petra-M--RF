@@ -420,8 +420,8 @@ class EM2Da_Port(EM2Da_Bdry):
     def get_extra_NDoF(self):
         return 1
 
-    # def get_probe(self):
-    #    return self.get_root_phys().dep_vars[0]+"_port_"+str(self.port_idx)
+    def get_probes(self):
+        return [self.get_root_phys().dep_vars[0]+"_port_"+str(self.port_idx)]
 
     def postprocess_extra(self, sol, flag, sol_extra):
         name = self.name() + '_' + str(self.port_idx)

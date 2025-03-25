@@ -106,11 +106,11 @@ class EM3D_PortArray(EM3D_Bdry):
         txt = str(p1) + '_' + str(p2)
         return self.get_root_phys().dep_vars[0] + "_port_" + txt
 
-    def get_probe(self):
+    def get_probes(self):
         p1 = int(self.port_idx)
         p2 = len(self._sel_index)
         txt = str(p1) + '_' + str(p2)
-        return self.get_root_phys().dep_vars[0] + "_port_" + txt
+        return [self.get_root_phys().dep_vars[0] + "_port_" + txt]
 
     def attribute_set(self, v):
         super(EM3D_PortArray, self).attribute_set(v)

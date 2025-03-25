@@ -58,8 +58,8 @@ class EM3D_PortLoad(EM3D_Bdry):
     def extra_DoF_name(self):
         return self.get_root_phys().dep_vars[0] + "_"+self.name().lower()
 
-    def get_probe(self):
-        return self.get_root_phys().dep_vars[0] + "_"+self.name().lower()
+    def get_probes(self):
+        return [self.get_root_phys().dep_vars[0] + "_"+self.name().lower()]
 
     def attribute_set(self, v):
         super(EM3D_PortLoad, self).attribute_set(v)

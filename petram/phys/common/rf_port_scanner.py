@@ -47,6 +47,9 @@ class PortScanner(DefaultParametricScanner):
 
         DefaultParametricScanner.__init__(self, data=data)
 
+    def get_probes(self):
+        return ["smat"]
+    
     def set_data_from_model(self, root):
         from petram.phys.em3d.em3d_port import EM3D_Port
         from petram.phys.em3d.em3d_portarray import EM3D_PortArray
@@ -164,7 +167,9 @@ class PortScanner(DefaultParametricScanner):
                 if (isinstance(obj, EM3D_Port) or
                     isinstance(obj, EM2Da_Port) or
                         isinstance(obj, EM1D_Port)):
-                    pnames.append((int(obj.port_idx), obj.get_probe()))
+                    # this assumes port BC define only 1 probe signal, which
+                    # is true at this moment
+                    pnames.append((int(obj.port_idx), obj.get_probes()[0]))
 
                 elif isinstance(obj, EM3D_PortArray):
                     dprint1("Smatrix collection is not supported for PortArray")
