@@ -13,6 +13,7 @@ if use_parallel:
     num_proc = MPI.COMM_WORLD.size
     myid = MPI.COMM_WORLD.rank
     smyid = '.'+'{:0>6d}'.format(myid)
+    from mfem.common.mpi_debug import nicePrint    
 else:
     myid = 0
     smyid = ''
@@ -45,10 +46,11 @@ class PortScanner(DefaultParametricScanner):
             names = [str(x) for x in self.port]
             self._names = ["ports_"+"_".join(names)]
 
+        self.smat = None
         DefaultParametricScanner.__init__(self, data=data)
 
     def get_probes(self):
-        return ["smat"]
+        return ["Smat"]
     
     def set_data_from_model(self, root):
         from petram.phys.em3d.em3d_port import EM3D_Port
@@ -192,18 +194,21 @@ class PortScanner(DefaultParametricScanner):
             xdata, ydata = load_probe(f)
             smat.append(ydata)
 
-        if len(smat) == 0:
-            return
 
-        p = Probe("Smat"+file_suffix, xnames=["ports"])
-        for idx, item in zip(ports, smat):
-            p.append_value(item, t=idx)
-        p.write_file()
+        if len(smat) != 0:
+            p = Probe("Smat"+file_suffix, xnames=["ports"])
+            for idx, item in zip(ports, smat):
+                p.append_value(item, t=idx)
+            p.write_file()
 
-        # store Smatrix to _variables
-        smat = np.vstack(smat)
-        from petram.helper.variables import Constant
-        engine.model._variables["Smat"+file_suffix] = Constant(smat)
+            # store Smatrix to _variables
+            smat = np.vstack(smat)
+            from petram.helper.variables import Constant
+            engine.model._variables["Smat"+file_suffix] = Constant(smat)
 
-
+        if use_parallel:
+             nicePrint(smat)            
+        # store this so that we can access this from sanner in global_ns
+        self.Smat = smat
+        
 PortScan = PortScanner
