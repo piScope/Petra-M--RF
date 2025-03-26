@@ -13,7 +13,7 @@ if use_parallel:
     num_proc = MPI.COMM_WORLD.size
     myid = MPI.COMM_WORLD.rank
     smyid = '.'+'{:0>6d}'.format(myid)
-    from mfem.common.mpi_debug import nicePrint    
+    from mfem.common.mpi_debug import nicePrint
 else:
     myid = 0
     smyid = ''
@@ -51,7 +51,7 @@ class PortScanner(DefaultParametricScanner):
 
     def get_probes(self):
         return ["Smat"]
-    
+
     def set_data_from_model(self, root):
         from petram.phys.em3d.em3d_port import EM3D_Port
         from petram.phys.em3d.em3d_portarray import EM3D_PortArray
@@ -194,7 +194,6 @@ class PortScanner(DefaultParametricScanner):
             xdata, ydata = load_probe(f)
             smat.append(ydata)
 
-
         if len(smat) != 0:
             p = Probe("Smat"+file_suffix, xnames=["ports"])
             for idx, item in zip(ports, smat):
@@ -207,8 +206,20 @@ class PortScanner(DefaultParametricScanner):
             engine.model._variables["Smat"+file_suffix] = Constant(smat)
 
         if use_parallel:
-             nicePrint(smat)            
+            from petram.helper.mpi_recipes import scatter_vector
+            if myid == 0:
+                s = np.array(smat.shape, dtype=np.int32)
+                tmp = smat.flatten().astype(np.complex128)
+            else:
+                s = None
+                tmp = None
+
+            s = MPI.COMM_WORLD.bcast(s)
+            tmp = MPI.COMM_WORLD.bcast(tmp)
+            smat = tmp.reshape(s)
+
         # store this so that we can access this from sanner in global_ns
         self.Smat = smat
-        
+
+
 PortScan = PortScanner
