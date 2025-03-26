@@ -57,8 +57,6 @@ default_col_model = col_model_options[1]
 #
 # routine for processing contribution panel data
 #
-
-
 def value2panelvalue(num_ions, value):
     if value is None:
         return [[x[1] for x in default_stix_option]]*(num_ions+1) + [1]
@@ -93,6 +91,8 @@ def value2panelvalue(num_ions, value):
 
         if names[i] != name:
             continue
+        if i >= num_ions+1:
+            break
         panelvalue[i] = x
 
     return panelvalue + [bool(include_eye3)]
@@ -150,7 +150,6 @@ def value2panelstr(value):
 #
 # build compiled function for assembly
 #
-
 
 def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges, col_model,
                        g_ns, l_ns, sdim=3, terms=default_stix_option):

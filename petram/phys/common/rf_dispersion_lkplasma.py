@@ -103,6 +103,8 @@ def value2panelvalue(num_ions, value):
 
         if names[i] != name:
             continue
+        if i >= num_ions+1:
+            break
         panelvalue[i] = x
 
     return [bool(v1)]+panelvalue
@@ -115,6 +117,7 @@ def value2flags(num_ions, value):
 
 def panelvalue2value(panelvalue):
     txt = [str(int(panelvalue[0]))]
+
     for i, x in enumerate(panelvalue[1:]):
         if i == 0:
             name = 'electrons'
