@@ -57,8 +57,10 @@ default_col_model = col_model_options[1]
 #
 # routine for processing contribution panel data
 #
+
+
 def value2panelvalue(num_ions, value):
-    if value is None:
+    if not isinstance(value, str):
         return [[x[1] for x in default_stix_option]]*(num_ions+1) + [1]
 
     # check if value matches with expected format
@@ -118,6 +120,9 @@ def panelvalue2value(panelvalue):
 
 
 def value2panelstr(value):
+    if not isinstance(value, str):
+        value = panelvalue2value([default_stix_option]*2 + [1])
+
     value_split = value.split('\n')
 
     for l in value_split[:-1]:
@@ -150,6 +155,7 @@ def value2panelstr(value):
 #
 # build compiled function for assembly
 #
+
 
 def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges, col_model,
                        g_ns, l_ns, sdim=3, terms=default_stix_option):
