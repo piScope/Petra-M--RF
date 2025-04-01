@@ -146,6 +146,7 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
             wcol = Te
             Se, Pe, De = SPD_el_b(w, b_norm, ne, wcol)
         else:
+            print(nu_eis)
             Se, Pe, De = SPD_el(w, b_norm, ne, nu_eis)
         S += Se
         P += Pe
@@ -159,6 +160,7 @@ def epsilonr_pl_cold_std(w, B, denses, masses, charges, Te, ne, col_model):
                 wcol = Te
                 Si, Pi, Di = SPD_ion_b(w, b_norm, dens, mass, charge, wcol)
             else:
+                print(nu_ei)                
                 Si, Pi, Di = SPD_ion(w, b_norm, dens, mass, charge, nu_ei)
             S += Si
             P += Pi
