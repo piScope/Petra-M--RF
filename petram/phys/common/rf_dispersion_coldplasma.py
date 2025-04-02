@@ -97,7 +97,8 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
     params = {'omega': omega, 'masses': masses, 'charges': charges,
               'col_model': col_model}
 
-    if terms == default_stix_option:
+    #if terms == default_stix_option:
+    if True:
         def epsilonr(ptx, B, dens_e, t_e, dens_i):
             e_cold = epsilonr_pl_cold(
                 omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
@@ -220,7 +221,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
     params = {'omega': omega, 'masses': masses,
               'charges': charges, 'col_model': col_model, 'pcomm': pcomm}
 
-    if terms == default_stix_option:
+    if True:
         def epsilonr(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
             from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold
 
