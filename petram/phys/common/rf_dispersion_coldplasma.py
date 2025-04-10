@@ -119,7 +119,7 @@ def panelvalue2value(panelvalue):
     return "\n".join(txt)
 
 
-def value2panelstr(value):
+def value2modelstr(value):
     if not isinstance(value, str):
         value = panelvalue2value([default_stix_option]*2 + [1])
 
@@ -151,6 +151,8 @@ def value2panelstr(value):
     if not include_eye3:
         txt.append("Vacuum contribution (eye3) is not included.")
     return '\n'.join(txt)
+
+default_stix_modelvalue = panelvalue2value([default_stix_option]*2 + [1])
 
 #
 # build compiled function for assembly

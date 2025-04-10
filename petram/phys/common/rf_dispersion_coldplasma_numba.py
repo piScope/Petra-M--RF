@@ -183,11 +183,11 @@ def adjust_terms(S, P, D, terms):
     if not terms[2]:       # P
         P *= 0.
 
+    if not terms[3]:
+        S = 1j*S.imag
+        P = 1j*P.imag
+        D = 1j*D.imag
     if not terms[4]:
-        S = S.imag
-        P = P.imag
-        D = D.imag
-    if not terms[5]:
         S = S.real
         P = P.real
         D = D.real

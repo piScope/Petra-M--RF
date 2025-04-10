@@ -3,6 +3,7 @@
 '''
 from petram.phys.common.rf_dispersion_coldplasma import (stix_options,
                                                          default_stix_option,
+                                                         default_stix_modelvalue,
                                                          col_model_options,
                                                          default_col_model,
                                                          vtable_data0)
@@ -60,7 +61,7 @@ class EM1D_ColdPlasma(EM1D_Vac):
 
     def attribute_set(self, v):
         EM1D_Vac.attribute_set(self, v)
-        v["stix_terms"] = default_stix_option
+        v["stix_terms"] = default_stix_modelvalue
         v["col_model"] = default_col_model
         return v
 
@@ -77,8 +78,8 @@ class EM1D_ColdPlasma(EM1D_Vac):
         self.stix_terms = value
 
     def stix_terms_str(self):
-        from petram.phys.common.rf_dispersion_coldplasma import value2panelstr
-        return value2panelstr(self.stix_terms)
+        from petram.phys.common.rf_dispersion_coldplasma import value2modelstr
+        return value2modelstr(self.stix_terms)
 
     def panel1_param(self):
         panels = super(EM1D_ColdPlasma, self).panel1_param()

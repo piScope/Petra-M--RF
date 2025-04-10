@@ -3,6 +3,7 @@
 '''
 from petram.phys.common.rf_dispersion_coldplasma import (stix_options,
                                                          default_stix_option,
+                                                         default_stix_modelvalue,
                                                          col_model_options,
                                                          default_col_model,
                                                          vtable_data0)
@@ -48,7 +49,7 @@ class EM3D_ColdPlasma(EM3D_Domain):
 
     def attribute_set(self, v):
         super(EM3D_ColdPlasma, self).attribute_set(v)
-        v["stix_terms"] = default_stix_option
+        v["stix_terms"] = default_stix_modelvalue
         v["col_model"] = default_col_model
         return v
 
@@ -65,8 +66,8 @@ class EM3D_ColdPlasma(EM3D_Domain):
         self.stix_terms = value
 
     def stix_terms_str(self):
-        from petram.phys.common.rf_dispersion_coldplasma import value2panelstr
-        return value2panelstr(self.stix_terms)
+        from petram.phys.common.rf_dispersion_coldplasma import value2modelstr
+        return value2modelstr(self.stix_terms)
 
     def panel1_param(self):
         panels = super(EM3D_ColdPlasma, self).panel1_param()
@@ -192,10 +193,10 @@ class EM3D_ColdPlasma(EM3D_Domain):
         from petram.phys.common.rf_dispersion_coldplasma import build_variables
 
         ss = self.parent.parent.name()+'_'+self.name()  # phys module name + name
-        ret  = build_variables(v, ss, ind_vars, omega, B, dens_e, t_e,
-                               dens_i, masses, charges, col_model,
-                               self._global_ns, self._local_ns,
-                               terms=self.stix_terms,)
+        ret = build_variables(v, ss, ind_vars, omega, B, dens_e, t_e,
+                              dens_i, masses, charges, col_model,
+                              self._global_ns, self._local_ns,
+                              terms=self.stix_terms,)
 
         from petram.phys.common.rf_dispersion_coldplasma import add_domain_variables_common
         add_domain_variables_common(self, ret, v, suffix, ind_vars)
