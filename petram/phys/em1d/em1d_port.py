@@ -156,9 +156,6 @@ class EM1D_Port(EM1D_Bdry):
                                         port_idx=port_idx)
         Phys.__init__(self)
 
-    def get_probes(self):
-        return [self.get_root_phys().dep_vars[0] + "_port_" + str(self.port_idx)]
-        
     def attribute_set(self, v):
         super(EM1D_Port, self).attribute_set(v)
         v['port_idx'] = 1
@@ -292,11 +289,15 @@ class EM1D_Port(EM1D_Bdry):
         default DoF name
         '''
         if kfes == 0:
-            return  # this cause error if it comes here
+            assert False, "should not come here"
         elif kfes == 1:
-            return "Ey_port"+str(self.port_idx)
+            return self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx)
         elif kfes == 2:
-            return "Ez_port"+str(self.port_idx)
+            return self.get_root_phys().dep_vars[2]+"_port"+str(self.port_idx)
+
+    def get_probes(self):
+        return [self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx),
+                self.get_root_phys().dep_vars[2]+"_port"+str(self.port_idx), ]
 
     def postprocess_extra(self, sol, flag, sol_extra):
         assert False, "Is it used?"

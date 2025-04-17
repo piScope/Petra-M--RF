@@ -204,8 +204,10 @@ class H_Ephi_rz(mfem.VectorPyCoefficient):
 class H_Ephi_phi(mfem.PyCoefficient):
     pass
 
+
 def bdry_constraints():
-   return [EM2Da_Port]
+    return [EM2Da_Port]
+
 
 class EM2Da_Port(EM2Da_Bdry):
     extra_diagnostic_print = True
@@ -411,17 +413,25 @@ class EM2Da_Port(EM2Da_Bdry):
     def has_extra_DoF(self, kfes):
         if self.mode == 'TE' and kfes == 1:
             return True
-        elif kfes == 0:
-            if self.mode == 'Ephi':
-                return True
-        else:
-            return False
+        return False
 
     def get_extra_NDoF(self):
         return 1
 
+    def extra_DoF_name2(self, kfes=0):
+        '''
+        default DoF name
+        '''
+        if self.mode == 'TE' and kfes == 1:
+            return self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx)
+
+        assert False, "should not come here"
+
     def get_probes(self):
-        return [self.get_root_phys().dep_vars[0]+"_port_"+str(self.port_idx)]
+        if self.mode == 'TE':
+            return [self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx), ]
+        else:
+            return []
 
     def postprocess_extra(self, sol, flag, sol_extra):
         name = self.name() + '_' + str(self.port_idx)
