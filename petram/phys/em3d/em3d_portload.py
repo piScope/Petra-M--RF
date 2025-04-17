@@ -127,7 +127,7 @@ class EM3D_PortLoad(EM3D_Bdry):
         root_bdr = self.get_root_phys()['Boundary']
 
         Smat, port_idx, ext_drive = self.vt.make_value_or_expression(self)
-        print(Smat, port_idx, ext_drive)
+        #print(Smat, port_idx, ext_drive)
         target = []
         for mm in root_bdr.get_children():
             if not mm.enabled:
@@ -176,14 +176,14 @@ class EM3D_PortLoad(EM3D_Bdry):
             C_Et, C_jwHt = mm.get_coeff_cls()
             inc_amp, inc_phase, eps, mur = mm.vt.make_value_or_expression(mm)
             lf1 = engine.new_lf(fes)
-            Ht1 = C_jwHt(3, pi, mm, real=True, eps=eps, mur=mur)
-            Ht2 = mm.restrict_coeff(Ht1, engine, vec=True)
+            Ht1 = C_jwHt(3, 180., mm, real=True, eps=eps, mur=mur)
+            Ht2 = mm.restrict_coeff(Ht1, engine, vec=True, idx=mm._sel_index)
             intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht2)
             lf1.AddBoundaryIntegrator(intg)
             lf1.Assemble()
             lf1i = engine.new_lf(fes)
-            Ht3 = C_jwHt(3, pi, mm, real=False, eps=eps, mur=mur)
-            Ht4 = self.restrict_coeff(Ht3, engine, vec=True)
+            Ht3 = C_jwHt(3, 180., mm, real=False, eps=eps, mur=mur)
+            Ht4 = self.restrict_coeff(Ht3, engine, vec=True, idx=mm._sel_index)
             intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht4)
             lf1i.AddBoundaryIntegrator(intg)
             lf1i.Assemble()
@@ -244,12 +244,11 @@ class EM3D_PortLoad(EM3D_Bdry):
             Smat = np.eye(l)*Smat
 
         Sleft = Smat[:, :len(names2)]
-
         idx = names2.index(target_name)
 
-        c1 = np.zeros((1, l))
-        c1[0, idx] = -1
-        c2 = np.atleast_2d(Sleft[:, idx])
+        c1 = np.atleast_2d(Sleft[:, idx])
+        c2 = np.zeros((1, l))
+        c2[0, idx] = -1
 
         from petram.helper.densemat2pymat import Densemat2PyMat
         ret1 = Densemat2PyMat(c1)

@@ -410,8 +410,14 @@ class EM3D_Port(EM3D_Bdry):
         arr = self.get_restriction_array(engine)
         x.ProjectBdrCoefficientTangent(Et, arr)
 
+        inc_wave = inc_amp * np.exp(1j * inc_phase / 180. * np.pi)
+
+        phase = np.angle(inc_wave) * 180 / np.pi
+        amp = np.sqrt(np.abs(inc_wave))
+
         t4 = np.array(
-            [[np.sqrt(inc_amp) * np.exp(1j * inc_phase / 180. * np.pi)]])
+            [[amp * np.exp(1j * phase / 180. * np.pi)]])
+
         weight = mfem.InnerProduct(engine.x2X(x), engine.b2B(lf2))
 
         #
