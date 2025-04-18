@@ -35,6 +35,7 @@ class PortScanner(DefaultParametricScanner):
         self.amplitude = kwargs.pop("amplitude", 1)
         self.phase = kwargs.pop("phase", 0.0)
         self.phys_name = kwargs.pop("phys", 'first')
+        self.smat_name = kwargs.pop("probe", 'Smat')
 
         if len(args) == 0:
             self._names = None
@@ -50,7 +51,7 @@ class PortScanner(DefaultParametricScanner):
         DefaultParametricScanner.__init__(self, data=data)
 
     def get_probes(self):
-        return ["Smat"]
+        return [self.smat_name]
 
     def set_data_from_model(self, root):
         from petram.phys.em3d.em3d_port import EM3D_Port
@@ -195,7 +196,7 @@ class PortScanner(DefaultParametricScanner):
             smat.append(ydata)
 
         if len(smat) != 0:
-            p = Probe("Smat"+file_suffix, xnames=["ports"])
+            p = Probe(self.smat_name+file_suffix, xnames=["ports"])
             for idx, item in zip(ports, smat):
                 p.append_value(item, t=idx)
             p.write_file()
@@ -203,7 +204,8 @@ class PortScanner(DefaultParametricScanner):
             # store Smatrix to _variables
             smat = np.vstack(smat)
             from petram.helper.variables import Constant
-            engine.model._variables["Smat"+file_suffix] = Constant(smat)
+            engine.model._variables[self.smat_name +
+                                    file_suffix] = Constant(smat)
 
         if use_parallel:
             from petram.helper.mpi_recipes import scatter_vector
