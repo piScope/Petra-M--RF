@@ -189,6 +189,7 @@ class EM3D_PortLoad(EM3D_Bdry):
             lf1i.Assemble()
             v1 = LF2PyVec(lf1, lf1i)
             vecs.append(v1)
+
         if ext_drive is not None:
             for i in range(len(ext_drive)):
                 vecs.append(vecs[-1]*0)
@@ -196,9 +197,9 @@ class EM3D_PortLoad(EM3D_Bdry):
         t1 = HStackPyVec(vecs)
         t3 = IdentityPyMat(l, diag=-1)
 
-        t4 = np.zeros(len(ports))
+        t4 = np.zeros(l)
         if Sright.shape[1] > 0:
-            t4 = t4 - Sright.dot(np.atleast_2d(ext_drive))
+            t4 = Sright.dot(np.atleast_2d(ext_drive).transpose())
 
         t4 = Array2PyVec(t4)
         # return (v1, v2, t3, t4, True)
@@ -246,7 +247,7 @@ class EM3D_PortLoad(EM3D_Bdry):
         Sleft = Smat[:, :len(names2)]
         idx = names2.index(target_name)
 
-        c1 = np.atleast_2d(Sleft[:, idx])
+        c1 = Sleft[:, [idx]]
         c2 = np.zeros((1, l))
         c2[0, idx] = -1
 
