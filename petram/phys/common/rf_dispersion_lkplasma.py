@@ -25,6 +25,7 @@ else:
     import mfem.ser as mfem
     myid = 0
 
+nu_txt = '\u03BD'
 vtable_data0 = [('B', VtableElement('bext', type='array',
                                     guilabel='magnetic field',
                                     default="=[0.,0.,0.]",
@@ -46,7 +47,8 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
                                                  default="100., 100",
                                                  tip="ion temperatures")),
                 ('temperatures_c', VtableElement('temperatures_c', type='float',
-                                                 guilabel='Tc(ev) or w_col(1/s)',
+                                                 guilabel='Tc(ev) or ' +
+                                                 nu_txt+'_col(1/s)',
                                                  default="100.",
                                                  tip="temperature used for collision")),
                 ('mass', VtableElement('mass', type='array',
@@ -158,8 +160,14 @@ def make_functions():
             eps = e_cold + e_hota
         else:
             # add anti_hermitian (collisional abs.) from cold
-            e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
-            eps = e_colda + e_hot
+            # e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
+            # eps = e_colda + e_hot
+
+            # add collisional abs. based on hot hermitan * nuei
+            nuei = sum(f_collisions(dens_i, charges, t_e, dens_e))
+            e_hot_col = 1j*(e_hot + e_hot.transpose().conj()) / \
+                2.0 * nuei/omega
+            eps = e_hot + e_hot_col
 
         out = -epsilon0 * omega * omega * eps
         out = rotate_dielectric(B, kpe, out)
@@ -190,7 +198,8 @@ def make_function_variable():
     '''
 
     def epsilonr(*ptx, B=None, t_c=None, dens_e=None, t_e=None, dens_i=None, t_i=None, kpakpe=None, kpevec=None):
-        from petram.phys.common.rf_dispersion_coldplasma_numba import epsilonr_pl_cold_std
+        from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
+                                                                       f_collisions)
         from petram.phys.common.rf_dispersion_lkplasma_numba import (epsilonr_pl_hot_std,
                                                                      eval_npara_nperp,
                                                                      rotate_dielectric,)
@@ -214,8 +223,14 @@ def make_function_variable():
             eps = e_cold + e_hota
         else:
             # add anti_hermitian (collisional abs.) from cold
-            e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
-            eps = e_colda + e_hot
+            # e_colda = (e_cold - e_cold.transpose().conj()) / 2.0
+            # eps = e_colda + e_hot
+
+            # add collisional abs. based on hot hermitan * nuei
+            nuei = sum(f_collisions(dens_i, charges, t_e, dens_e))
+            e_hot_col = 1j*(e_hot + e_hot.transpose().conj()) / \
+                2.0 * nuei/omega
+            eps = e_hot + e_hot_col
 
         out = -epsilon0 * omega * omega * eps
         out = rotate_dielectric(B, kpe, out)

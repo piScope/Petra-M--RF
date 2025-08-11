@@ -20,6 +20,7 @@ else:
     import mfem.ser as mfem
     myid = 0
 
+nu_txt = '\u03BD'
 vtable_data0 = [('B', VtableElement('bext', type='array',
                                     guilabel='magnetic field',
                                     default="=[0.,0.,0.]",
@@ -29,7 +30,8 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
                                          default="1e19",
                                          tip="electron density")),
                 ('temperature', VtableElement('temperature', type='float',
-                                              guilabel='Tc(ev) or w_col(1/s)',
+                                              guilabel='Tc(ev) or ' +
+                                              nu_txt+'_col(1/s)',
                                               default="10.",
                                               tip="angular collision freq. or effecitive temperature for collisions")),
                 ('dens_i', VtableElement('dens_i', type='array',
@@ -51,7 +53,7 @@ stix_options = ["S(xx/yy)", "D(xy/yx)", "P(zz)",
                 "Prop.(H)", "Abs.(A)"]
 default_stix_option = [(x, True) for x in stix_options[:]]
 
-col_model_options = ["w/o col.", "Tc", "wcol", ]
+col_model_options = ["w/o col.", "Tc", nu_txt+"_col", ]
 default_col_model = col_model_options[1]
 
 #
@@ -151,6 +153,7 @@ def value2modelstr(value):
     if not include_eye3:
         txt.append("Vacuum contribution (eye3) is not included.")
     return '\n'.join(txt)
+
 
 default_stix_modelvalue = panelvalue2value([default_stix_option]*2 + [1])
 
