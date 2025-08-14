@@ -7,6 +7,9 @@ from petram.phys.common.rf_dispersion_coldplasma import (stix_options,
                                                          value2panelvalue,
                                                          panelvalue2value)
 
+eps_txt = "\u03B5"
+mu_txt = "\u03BC"
+
 
 def elp_setting(num_ions):
     from petram.phys.common.rf_dispersion_coldplasma import stix_options
@@ -19,7 +22,8 @@ def elp_setting(num_ions):
     for n in names:
         panels.append([n, None, 36, {"col": 5,
                                      "labels": stix_options}])
-    panels.append([None, True, 3, {"text": "include eye(3) contribution"}])
+    panels.append(
+        [None, True, 3, {"text": "include eye(3) for "+eps_txt + " and " + mu_txt}])
     return panels
 
 

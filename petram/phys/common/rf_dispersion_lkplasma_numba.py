@@ -24,26 +24,26 @@ array([[-1.56316016e+03+1.23807373e+01j, -1.12033076e+01-9.84907588e+03j,
          1.29769916e+06+1.58788920e+06j]])
 
 '''
-import petram.debug as debug
-dprint1, dprint2, dprint3 = debug.init_dprints('RF_DISPERSION_LKPLASMA_NUMBA')
-
-from petram.phys.phys_const import c as speed_of_light
-from petram.helper.numba_ive import ive
-from petram.phys.common.numba_zfunc import zfunc
-from numpy import pi, sqrt
-from petram.phys.phys_const import c_cgs as clight
-from petram.phys.phys_const import (mass_electron, mass_proton)
-from petram.phys.phys_const import q0_cgs
-from petram.phys.phys_const import epsilon0 as e0
-from petram.phys.phys_const import q0 as q_base
-from petram.phys.phys_const import Da
-from numba import njit, void, int32, int64, float64, complex128, types
+import logging
+from petram.phys.common.rf_plasma_wc_wp import om, wpesq, wpisq, wce, wci
+import numpy as np
 from numpy import (pi, sin, cos, exp, sqrt, log, arctan2, cross,
                    max, array, linspace, conj, transpose,
                    sum, zeros, dot, array, ascontiguousarray)
-import numpy as np
+from numba import njit, void, int32, int64, float64, complex128, types
+from petram.phys.phys_const import Da
+from petram.phys.phys_const import q0 as q_base
+from petram.phys.phys_const import epsilon0 as e0
+from petram.phys.phys_const import q0_cgs
+from petram.phys.phys_const import (mass_electron, mass_proton)
+from petram.phys.phys_const import c_cgs as clight
+from numpy import pi, sqrt
+from petram.phys.common.numba_zfunc import zfunc
+from petram.helper.numba_ive import ive
+from petram.phys.phys_const import c as speed_of_light
+import petram.debug as debug
+dprint1, dprint2, dprint3 = debug.init_dprints('RF_DISPERSION_LKPLASMA_NUMBA')
 
-from petram.phys.common.rf_plasma_wc_wp import om, wpesq, wpisq, wce, wci
 
 iarray_ro = types.Array(int32, 1, 'C', readonly=True)
 iarray2_ro = types.Array(int32, 2, 'C', readonly=True)
@@ -51,7 +51,6 @@ darray_ro = types.Array(float64, 1, 'C', readonly=True)
 
 # slience log message
 dprint1("Importing numba routines")
-import logging
 numba_logger = logging.getLogger('numba')
 numba_clevel = numba_logger.level
 numba_logger.setLevel(logging.WARNING)
@@ -270,19 +269,39 @@ def adjust_terms(tmp, terms):
         ret[3] = tmp[3]
     if terms[5]:       # Xi
         ret[4] = tmp[4]
-    return ret
+
+    # return ret
+
+    if terms[6]:
+        ret2 = np.array([ret[0].real, 1j*ret[1].imag, ret[2].real,  # S, D, YY,
+                         ret[3].real, 1j*ret[4].imag, ret[5].real, ])  # Eta, Xi, P
+    else:
+        ret2 = np.array([0j, 0j, 0j, 0j, 0j, 0j])
+
+    if terms[7]:
+        ret3 = np.array([1j*ret[0].imag, ret[1].real, 1j*ret[2].imag,  # S, D, YY,
+                         1j*ret[3].imag, ret[4].real, 1j*ret[5].imag, ])  # Eta, Xi, P
+    else:
+        ret3 = np.array([0j, 0j, 0j, 0j, 0j, 0j])
+
+    return ret2 + ret3
 
 
 @njit(complex128[:, ::1](float64, float64[:], float64[:], float64[:], darray_ro, iarray_ro,
-                         float64, float64, float64, float64, int32, iarray2_ro))
-def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, nperp, nhrms, terms):
+                         float64, float64, float64, float64, int32, iarray2_ro, int32))
+def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, nperp, nhrms, terms, use_eye3):
 
     b_norm = sqrt(B[0]**2+B[1]**2+B[2]**2)
     freq = w/2/pi
 
-    M = array([[1.+0j,   0., 0.],
-               [0.,   1.+0j, 0.j],
-               [0.,   0.,    1.+0j]])
+    if use_eye3:
+        M = array([[1.+0j,   0., 0.],
+                   [0.,   1.+0j, 0.j],
+                   [0.,   0.,    1.+0j]])
+    else:
+        M = array([[0.+0j,   0., 0.],
+                   [0.,   0.+0j, 0.j],
+                   [0.,   0.,    0.+0j]])
 
     icount = 0
     if ne > 0.:
@@ -480,6 +499,7 @@ def eval_kpe_em2d(ptx, kpara, kperp, k, b):
     kvec = array([k[0], k[1], kz])
 
     return kvec
+
 
 # back to the original log level
 numba_logger.setLevel(numba_clevel)

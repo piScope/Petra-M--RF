@@ -72,7 +72,7 @@ vtable_data0 = [('B', VtableElement('bext', type='array',
 
 kpe_options = ["explicit", "fast wave", "slow wave"]
 default_kpe_option = "explicit"
-term_options = ["Sig", "Del", "Pi", "Tau", "Eta", "Xi"]
+term_options = ["Sig", "Del", "Pi", "Tau", "Eta", "Xi", "Prop.(H)", "Abs.(A)"]
 default_term_option = [(x, True) for x in term_options[:]]
 
 #
@@ -82,11 +82,12 @@ default_term_option = [(x, True) for x in term_options[:]]
 
 def value2panelvalue(num_ions, value):
     if value is None:
-        return [False]+[[x[1] for x in default_term_option]]*(num_ions+1)
+        return [False]+[[x[1] for x in default_term_option]]*(num_ions+1) + [True]
 
     v1 = int(value.split('\n')[0])
+    v2 = int(value.split('\n')[-1])
 
-    value = '\n'.join(value.split('\n')[1:])
+    value = '\n'.join(value.split('\n')[1:-1])
     names = [xx.split(',')[0] for xx in value.split("\n")]
     opts = [[x.split(":")[0].strip() for x in xx.split(',')[1:]]
             for xx in value.split("\n")]
@@ -109,23 +110,25 @@ def value2panelvalue(num_ions, value):
             break
         panelvalue[i] = x
 
-    return [bool(v1)]+panelvalue
+    return [bool(v1)]+panelvalue + [bool(v2)]
 
 
 def value2flags(num_ions, value):
     tmp = value2panelvalue(num_ions, value)
-    return tmp[0], np.array(tmp[1:]).astype(np.int32)
+    return tmp[0], np.array(tmp[1:-1]).astype(np.int32), tmp[-1]
 
 
 def panelvalue2value(panelvalue):
     txt = [str(int(panelvalue[0]))]
 
-    for i, x in enumerate(panelvalue[1:]):
+    for i, x in enumerate(panelvalue[1:-1]):
         if i == 0:
             name = 'electrons'
         else:
             name = 'ions'+str(i)
         txt.append(name+','+', '.join([xx[0]+":"+str(int(xx[1])) for xx in x]))
+
+    txt.append(str(int(panelvalue[-1])))
 
     return "\n".join(txt)
 
@@ -134,7 +137,7 @@ def panelvalue2value(panelvalue):
 #
 
 
-def make_functions():
+def make_functions(terms):
     from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
                                                                    f_collisions)
     from petram.phys.common.rf_dispersion_lkplasma_numba import (epsilonr_pl_hot_std,
@@ -150,9 +153,10 @@ def make_functions():
         nperp = npape[1].real
         kpe = kpe_alg(_ptx, omega*npara/c, omega*nperp/c, kpevec, B)
 
+        use_eye3 = lk_terms[2]
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms[1])
+                                    npara, nperp, nhrms, lk_terms[1], use_eye3)
 
         if lk_terms[0]:
             # use cold plasma propagation + absoprtion due to hot
@@ -179,8 +183,12 @@ def make_functions():
             omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
         return out
 
-    def mur(_ptx):
-        return mu0*np.eye(3, dtype=np.complex128)
+    if terms[2]:
+        def mur(_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)*1e6
 
     def sigma(_ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
@@ -192,7 +200,7 @@ def make_functions():
 #
 
 
-def make_function_variable():
+def make_function_variable(terms):
     '''
     definition of functions for generating variables.
     '''
@@ -212,9 +220,10 @@ def make_function_variable():
         nperp = npape[1].real
         kpe = kpe_alg(array(ptx), omega*npara/c, omega*nperp/c, kpevec, B)
 
+        use_eye3 = lk_terms[2]
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms[1])
+                                    npara, nperp, nhrms, lk_terms[1], use_eye3)
 
         # calling cold with Tc
         if lk_terms[0]:
@@ -259,13 +268,18 @@ def make_function_variable():
 
         kpe = kpe_alg(array(ptx), omega*npara/c, omega*nperp/c, kpevec, B)
 
+        use_eye3 = lk_terms[2]
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms[1])
+                                    npara, nperp, nhrms, lk_terms[1], use_eye3)
         return e_hot
 
-    def mur(*_ptx):
-        return mu0*np.eye(3, dtype=np.complex128)
+    if terms[2]:
+        def mur(*_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(*_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)*1e6
 
     def sigma(*_ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
@@ -314,9 +328,10 @@ def make_function_variable():
 
         dens_i = np.array([0.]*len(dens_i))
 
+        use_eye3 = lk_terms[2]
         e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i,  masses, charges,
                                     t_e, dens_e,
-                                    npara, nperp, nhrms, lk_terms[1])
+                                    npara, nperp, nhrms, lk_terms[1], use_eye3)
 
         e_hota = (e_hot - e_hot.transpose().conj())/2.0
         out = -epsilon0 * omega * omega * e_hota
@@ -339,6 +354,7 @@ def make_function_variable():
         kpe = kpe_alg(array(ptx), omega*npara/c, omega*nperp/c, kpevec, B)
 
         dens_e = 0.0
+        use_eye3 = lk_terms[2]
 
         ret = np.zeros((len(masses), 3, 3), dtype=np.complex128)
         for i in range(len(masses)):
@@ -346,7 +362,7 @@ def make_function_variable():
             dens_i2[i] = dens_i[i]
             e_hot = epsilonr_pl_hot_std(omega, B, t_i, dens_i2,  masses, charges,
                                         t_e, dens_e,
-                                        npara, nperp, nhrms, lk_terms[1])
+                                        npara, nperp, nhrms, lk_terms[1], use_eye3)
 
             e_hota = (e_hot - e_hot.transpose().conj()) / 2.0
             out = -epsilon0 * omega * omega * e_hota
@@ -487,7 +503,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
     if kzmode is not None:
         params["kzmode"] = kzmode
 
-    epsilon, sdp, mur, sigma = make_functions()
+    epsilon, sdp, mur, sigma = make_functions(terms)
 
     numba_debug = False if myid != 0 else get_numba_debug()
 
@@ -570,7 +586,8 @@ def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_
               'c': speed_of_light, "kpe_mode": kpe_options.index(kpe_mode),
               'kpe_alg': kpe_alg, 'col_model': col_model, 'lk_terms': terms}
 
-    epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi, lkframe = make_function_variable()
+    epsilonr, sdp, mur, sigma, nuei, epsilonrac, epsilonrae, epsilonrai, npape, sdphot, fce, fci, fpe, fpi, lkframe = make_function_variable(
+        terms)
 
     solvar["_B_"+ss] = B_var
     solvar["_tc_"+ss] = tc_var

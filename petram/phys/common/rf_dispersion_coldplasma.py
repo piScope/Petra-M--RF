@@ -219,12 +219,12 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
             omega, B, dens_i, masses, charges, t_e, dens_e, sterms, 1, col_model)
         return out
 
-    if col_model > 2:
-        def mur(ptx):
-            return 10000.*mu0*np.eye(3, dtype=np.complex128)
-    else:
+    if np.int32(terms[0]):
         def mur(ptx):
             return mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(ptx):
+            return 1e6*mu0*np.eye(3, dtype=np.complex128)
 
     def sigma(ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
@@ -365,8 +365,12 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
         def mur(*_ptx):
             return mu0*np.eye(3, dtype=np.complex128)
 
-    def mur(*_ptx):
-        return mu0*np.eye(3, dtype=np.complex128)
+    if np.int32(terms[0]):
+        def mur(*_ptx):
+            return mu0*np.eye(3, dtype=np.complex128)
+    else:
+        def mur(*_ptx):
+            return 1e6*mu0*np.eye(3, dtype=np.complex128)
 
     def sigma(*_ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)

@@ -7,6 +7,8 @@ from petram.phys.common.rf_dispersion_lkplasma import (term_options,
                                                        value2panelvalue,
                                                        panelvalue2value)
 
+eps_txt = "\u03B5"
+mu_txt = "\u03BC"
 
 def elp_setting(num_ions):
     names = ["electrons"]
@@ -16,9 +18,9 @@ def elp_setting(num_ions):
     panels = []
     panels.append([None, True, 3, {"text": "use coldplasma for propagation"}])
     for n in names:
-        panels.append([n, None, 36, {"col":7,
+        panels.append([n, None, 36, {"col":6,
                                      "labels": term_options}])
-
+    panels.append([None, True, 3, {"text": "include eye(3) for "+eps_txt + " and " + mu_txt}])
     return panels
 
 
