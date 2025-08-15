@@ -80,7 +80,7 @@ default_term_option = [(x, True) for x in term_options[:]]
 #
 
 
-def value2panelvalue(num_ions, value):
+def _value2panelvalue(num_ions, value):
     if value is None:
         return [False]+[[x[1] for x in default_term_option]]*(num_ions+1) + [True]
 
@@ -112,6 +112,11 @@ def value2panelvalue(num_ions, value):
 
     return [bool(v1)]+panelvalue + [bool(v2)]
 
+def value2panelvalue(num_ions, value):
+    try:
+        return _value2panelvalue(num_ions, value)
+    except BaseException:
+        return [False]+[[x[1] for x in default_term_option]]*(num_ions+1) + [True]
 
 def value2flags(num_ions, value):
     tmp = value2panelvalue(num_ions, value)

@@ -21,7 +21,7 @@ def zfunc(x):
     over 0<x<10. Use it carefully, the worst error of real value ~ 10^-4 
     '''
     if np.abs(x) > 10.:
-        return -1/x - 1/2/x**3 - 3/4/x**5 - 15/8/x**7
+        return -1./x - 1./2./x**3 - 3./4./x**5 - 15./8./x**7 -105./16./x**9
     value = zfunc_c0
     for c, d in z_func_cd:
         value = value + c / (x - d)
