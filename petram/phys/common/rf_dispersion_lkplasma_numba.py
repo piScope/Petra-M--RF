@@ -328,8 +328,8 @@ def epsilonr_pl_hot_std(w, B, temps, denses, masses, charges, Te, ne, npara, npe
 
         tmp = np.array([0j, 0j, 0j, 0j, 0j, 0j])
         for nh in range(-nhrms, nhrms+1):
-            if nh != 1 and nh != 2:
-                continue
+            #if nh != 1 and nh != 2:
+            #    continue
             tmp += chi_ions(nperp, npara, dens, A,
                             Z, ti_kev, b_norm, freq, nh)
 
