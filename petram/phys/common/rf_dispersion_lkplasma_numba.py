@@ -212,9 +212,13 @@ def chi_el(nperp, npar, ne, te_kev, Bmagn, freq, nharm):
     vt = vte(te_kev)
     zeta_e = 1.0 / (npar * vt) * (1.0 - nharm * w_ce)
     pl_z = zfunc(zeta_e)
+
+    # An = 1/kpara/vth * Z
+    # Bn = 1/kpara * (1 + zeta*Z)
     An = 1.0 / (om(freq) * npar * vt) * pl_z
     Bn = clight / (om(freq) * npar) * (1.0 + zeta_e * pl_z)
 
+    # w_pe^2/w
     wp2_fac = wpesq(ne, freq) * om(freq)
     wp2An = An * wp2_fac
     wp2Bn = Bn * wp2_fac
