@@ -1,5 +1,3 @@
-from __future__ import print_function
-from petram.phys.vtable import VtableElement, Vtable
 '''
 EM1d : 1D Frequency domain Maxwell equation.
 
@@ -30,10 +28,15 @@ import numpy as np
 import traceback
 
 from petram.model import Domain, Bdry, Pair
-from petram.phys.phys_model import Phys, PhysModule
+from petram.phys.phys_model import Phys
+from petram.phys.common.em_base import EMPhysModule
 from petram.phys.em1d.em1d_base import EM1D_Bdry
 from petram.phys.em1d.em1d_vac import EM1D_Vac
 
+import petram.debug as debug
+dprint1, dprint2, dprint3 = debug.init_dprints('EM1DModel')
+
+from petram.phys.vtable import VtableElement, Vtable
 
 class EM1D_DefDomain(EM1D_Vac):
     can_delete = False
@@ -106,13 +109,12 @@ class EM1D_DefPair(Pair, Phys):
         return []
 
 
-class EM1D(PhysModule):
+class EM1D(EMPhysModule):
     der_vars_base = ['B']
     geom_dim = 1
 
     def __init__(self, **kwargs):
-        super(EM1D, self).__init__()
-        Phys.__init__(self)
+        super(EM1D, self).__init__(**kwargs)
         self['Domain'] = EM1D_DefDomain()
         self['Boundary'] = EM1D_DefBdry()
         self['Pair'] = EM1D_DefPair()
@@ -187,7 +189,6 @@ class EM1D(PhysModule):
     def attribute_set(self, v):
         v = super(EM1D, self).attribute_set(v)
         v["element"] = 'L2_FECollection, H1_FECollection, H1_FECollection'
-        v["freq_txt"] = '1.0e9'
         v["ndim"] = 1
         v["ind_vars"] = 'x'
         v["dep_vars_suffix"] = ''
@@ -196,7 +197,7 @@ class EM1D(PhysModule):
 
     def panel1_param(self):
         panels = super(EM1D, self).panel1_param()
-        panels.extend([self.make_param_panel('freq',  self.freq_txt),
+        panels.extend([#self.make_param_panel('freq',  self.freq_txt),
                        ["independent vars.", self.ind_vars, 0, {}],
                        ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
@@ -208,31 +209,17 @@ class EM1D(PhysModule):
         names = ','.join([x for x in self.dep_vars])
         names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM1D, self).get_panel1_value()
-        val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
+        #val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
+        #            names, names2, self.use_h1_x])
+        val.extend([self.ind_vars, self.dep_vars_suffix,
                     names, names2, self.use_h1_x])
         return val
 
-    def get_default_ns(self):
-        from petram.phys.phys_const import mu0, epsilon0, q0, massu, chargez
-        ns = {'mu0': mu0,
-              'e0': epsilon0,
-              'q0': q0,
-              'massu': massu,
-              'chargez': chargez}
-
-        return ns
-    '''
-    def attribute_expr(self):
-        return ["freq"], [float]
-    def attribute_mirror_ns(self):
-        return ['freq']
-    '''
     def import_panel1_value(self, v):
         v = super(EM1D, self).import_panel1_value(v)
 
-        self.freq_txt = str(v[0])
-        self.ind_vars = str(v[1])
-        self.dep_vars_suffix = str(v[2])
+        self.ind_vars = str(v[0])
+        self.dep_vars_suffix = str(v[1])
         self.use_h1_x = v[-1]
 
         if self.use_h1_x:
@@ -262,18 +249,6 @@ class EM1D(PhysModule):
 
     def get_possible_point(self):
         return []
-
-    def is_complex(self):
-        return True
-
-    def get_freq_omega(self):
-        freq, _void = self.eval_param_expr(self.freq_txt, "freq")
-        try:
-            _void = float(freq)
-        except:
-            freq = 1e6
-            dprint1("Error, frequency must be a scalr real value")
-        return freq, 2.*np.pi*freq
 
     def add_variables(self, v, name, solr, soli=None):
         from petram.helper.variables import add_coordinates
