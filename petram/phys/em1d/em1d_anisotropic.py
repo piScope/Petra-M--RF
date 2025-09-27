@@ -129,17 +129,17 @@ def make_sigma(*args, **kwargs):
 '''
 def Epsilon_Coeff(exprs, ind_vars, l, g, omega):
     # - omega^2 * epsilon0 * epsilonr
-    fac = -epsilon0 * omega * omega
+    fac = -epsilon0 * omega * omega * cnorm
     return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
 def Sigma_Coeff(exprs, ind_vars, l, g, omega):
     # v = - 1j * self.omega * v
-    fac = - 1j * omega
+    fac = - 1j * omega*cnorm
     return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
 def Mu_Coeff(exprs, ind_vars, l, g, omega):
     # v = mu * v
-    fac = mu0
+    fac = mu0*cnorm
     #return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return SCoeff([exprs], ind_vars, l, g, return_complex=True, scale=fac)
      
@@ -152,14 +152,16 @@ class EM1D_Anisotropic(EM1D_Vac):
 
     def get_coeffs2(self, r, c):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
 
         ind_vars = self.get_root_phys().ind_vars
         l = self._local_ns
         g = self._global_ns
-        coeff1 = Epsilon_Coeff(e, ind_vars, l, g, omega)
-        coeff2 = Mu_Coeff(m, ind_vars, l, g, omega)
-        coeff3 = Sigma_Coeff(s, ind_vars, l, g, omega)
+
+        coeff1 = Epsilon_Coeff(e, ind_vars, l, g, omega, cnorm)
+        coeff2 = Mu_Coeff(m, ind_vars, l, g, omega, cnorm)
+        coeff3 = Sigma_Coeff(s, ind_vars, l, g, omega, cnorm)
 
         ec = coeff1[r, c]
         sc = coeff3[r, c]

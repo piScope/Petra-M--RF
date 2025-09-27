@@ -16,6 +16,7 @@ class EMPhysModule(PhysModule):
     def attribute_set(self, v):
         v = super(EMPhysModule, self).attribute_set(v)
         v["freq_txt"] = "1.0e9"
+        v["coeffnorm_txt"] = "1.0"        
         return v
 
     def is_complex(self):
@@ -55,3 +56,14 @@ class EMPhysModule(PhysModule):
         v = super(EMPhysModule, self).import_panel1_value(v)
         self.freq_txt = str(v[0])
         return v[1:]
+
+    def get_coeff_norm(self):
+        norm, _void = self.eval_param_expr(self.coeffnorm_txt, "coeff_norm")
+        try:
+            _void = float(norm)
+        except:
+            norm = 1.0
+            dprint1("Error, Coefficeint normalization be a scalr real value")
+        return norm
+
+

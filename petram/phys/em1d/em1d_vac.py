@@ -94,21 +94,21 @@ class InvMu(PhysCoefficient):
        if self.real:  return v.real
        else: return v.imag
 '''
-def Epsilon(exprs, ind_vars, l, g, omega=1):
+def Epsilon(exprs, ind_vars, l, g, omega=1, cnorm=1):
     # - omega^2 * epsilon0 * epsilonr
-    fac = -epsilon0 * omega * omega
+    fac = -epsilon0 * omega * omega * cnorm
     coeff = SCoeff([exprs], ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
 
-def Sigma(exprs, ind_vars, l, g, omega=1):
+def Sigma(exprs, ind_vars, l, g, omega=1, cnorm=1):
     # - 1j * self.omega * sigma
-    fac = - 1j * omega
+    fac = - 1j * omega * cnorm
     coeff = SCoeff([exprs], ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
        
-def InvMu(m, ind_vars, l, g, factor=1):
+def InvMu(m, ind_vars, l, g, factor=1, cnorm=1):
     coeff = SCoeff([m], ind_vars, l, g, return_complex=True, scale=mu0)
-    return 1./coeff*factor
+    return 1./coeff*factor*cnorm
        
 def domain_constraints():
     return [EM1D_Vac]
@@ -146,6 +146,7 @@ class EM1D_Vac(EM1D_Domain):
     def add_bf_contribution(self, engine, a, real=True, kfes=0,
                             ecsc=None):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()        
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
         if not isinstance(e, str):
             e = str(e)
@@ -163,10 +164,10 @@ class EM1D_Vac(EM1D_Domain):
         if ecsc is None:
             sc = Sigma(s, self.get_root_phys().ind_vars,
                        self._local_ns, self._global_ns,
-                       omega = omega)
+                       omega=omega, cnorm=cnorm)
             ec = Epsilon(e, self.get_root_phys().ind_vars,
                                 self._local_ns, self._global_ns,
-                              omega = omega)
+                              omega=omega, cnorm=cnorm)
         else:
             # anistropic case...
             ec, sc = ecsc
