@@ -105,7 +105,7 @@ class E_port(mfem.PyCoefficient):
 
 class jwH_port(mfem.PyCoefficient):
     def __init__(self, bdry, real=True, amp=(1.0, 0.0),  eps=1.0,
-                 mur=1.0, ky=0.0, kz=0.0, direction="y", normalize=False):
+                 mur=1.0, ky=0.0, kz=0.0, direction="y", normalize=False, cnorm=None):
         mfem.PyCoefficient.__init__(self)
         self.real = real
         freq, omega = bdry.get_root_phys().get_freq_omega()
@@ -137,7 +137,7 @@ class jwH_port(mfem.PyCoefficient):
             self.ret = -Hz * (-bdry.norm)
         else:
             self.ret = Hy * (-bdry.norm)
-        self.ret = complex(self.ret)
+        self.ret = complex(self.ret)*cnorm
 
     def EvalValue(self, x):
         if self.real:
@@ -271,7 +271,7 @@ class EM1D_Port(EM1D_Bdry):
         cnorm = self.get_root_phys().get_coeff_norm()
 
         coeff = jwH_port(self, real=real, amp=inc_wave,  eps=eps,
-                         mur=mur/cnorm, ky=ky, kz=kz,  direction=d)
+                         mur=mur, ky=ky, kz=kz,  direction=d, cnorm=cnorm)
         self.add_integrator(engine, 'inc_amp', coeff,
                             b.AddBoundaryIntegrator,
                             mfem.BoundaryLFIntegrator)
@@ -324,7 +324,7 @@ class EM1D_Port(EM1D_Bdry):
         inc_amp0 = (1, 0) if kfes == 1 else (0, 1)
         lf1 = engine.new_lf(fes)
         Ht = jwH_port(self, real=True, amp=inc_amp0,  eps=eps,
-                      mur=mur/cnorm, ky=ky, kz=kz,  direction=d)  # , normalize=True)
+                      mur=mur, ky=ky, kz=kz,  direction=d, cnorm=cnorm)  # , normalize=True)
         Ht = self.restrict_coeff(Ht, engine)
         intg = mfem.BoundaryLFIntegrator(Ht)
         lf1.AddBoundaryIntegrator(intg)
@@ -332,7 +332,7 @@ class EM1D_Port(EM1D_Bdry):
 
         lf1i = engine.new_lf(fes)
         Ht = jwH_port(self, real=False, amp=inc_amp0,  eps=eps,
-                      mur=mur/cnorm, ky=ky, kz=kz,  direction=d)  # , normalize=True)
+                      mur=mur, ky=ky, kz=kz,  direction=d, cnorm=cnorm)  # , normalize=True)
         Ht = self.restrict_coeff(Ht, engine)
         intg = mfem.BoundaryLFIntegrator(Ht)
         lf1i.AddBoundaryIntegrator(intg)
@@ -345,7 +345,7 @@ class EM1D_Port(EM1D_Bdry):
 
         lf2 = engine.new_lf(fes)
         Et = E_port(self, real=True, amp=inc_amp0,  eps=eps,
-                    mur=mur/cnorm, ky=ky, kz=kz,  direction=d)  # , normalize=True)
+                    mur=mur, ky=ky, kz=kz,  direction=d)  # , normalize=True)
 
         Et = self.restrict_coeff(Et, engine)
         intg = mfem.DomainLFIntegrator(Et)
