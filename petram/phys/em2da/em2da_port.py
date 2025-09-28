@@ -113,6 +113,7 @@ class H_TE_rz(mfem.VectorPyCoefficient):
         self.phase = phase  # phase !=0 for incoming wave
 
         freq, omega = bdry.get_root_phys().get_freq_omega()
+        cnorm = bdry.get_root_phys().get_coeff_norm()
 
         self.a, self.c = bdry.a, bdry.c
         self.a_vec = bdry.a_vec
@@ -126,7 +127,7 @@ class H_TE_rz(mfem.VectorPyCoefficient):
         dprint1("propagation constant:" + str(beta))
 
         AA = omega * mur * mu0 * np.pi / kc / kc
-        self.AA = omega * beta * np.pi / kc / kc / AA * amp
+        self.AA = omega * beta * np.pi / kc / kc / AA * amp * cnorm
 
     def EvalValue(self, x):
         p = np.array(x)
@@ -150,6 +151,7 @@ class H_TE_phi(mfem.PyCoefficient):
         self.phase = phase  # phase !=0 for incoming wave
 
         freq, omega = bdry.get_root_phys().get_freq_omega()
+        cnorm = bdry.get_root_phys().get_coeff_norm()
 
         self.a, self.c = bdry.a, bdry.c
         self.a_vec = bdry.a_vec
@@ -163,7 +165,7 @@ class H_TE_phi(mfem.PyCoefficient):
         dprint1("propagation constant:" + str(beta))
 
         AA = omega * mur * mu0 * np.pi / kc / kc * amp
-        self.AA = omega * beta * np.pi / kc / kc / AA
+        self.AA = omega * beta * np.pi / kc / kc / AA * cnorm
         self.beta = beta
         self.fac = 1 / mu0 / mur * amp
         '''

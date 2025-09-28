@@ -56,8 +56,10 @@ data = (('inc_amp', VtableElement('inc_amp', type='complex',
                               default=1.0,
                               tip="relative permeability")),)
 
+
 def bdry_constraints():
-   return [EM3D_Port]
+    return [EM3D_Port]
+
 
 class EM3D_Port(EM3D_Bdry):
     extra_diagnostic_print = True

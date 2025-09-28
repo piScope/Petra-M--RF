@@ -95,6 +95,7 @@ class C_jwHt_TE(mfem.VectorPyCoefficient):
         self.phase = phase  # phase !=0 for incoming wave
 
         freq, omega = bdry.get_root_phys().get_freq_omega()
+        cnorm = bdry.get_root_phys().get_coeff_norm()
 
         self.a, self.b, self.c = bdry.a, bdry.b, bdry.c
         self.a_vec, self.b_vec = bdry.a_vec, bdry.b_vec
@@ -111,7 +112,7 @@ class C_jwHt_TE(mfem.VectorPyCoefficient):
         alpha = omega*mur*mu0*np.pi/kc/kc
         gamma = beta*np.pi/kc/kc
         norm = TE_norm(self.m, self.n, self.a, self.b, alpha, gamma)
-        self.AA = omega*gamma/norm*amp
+        self.AA = omega*gamma/norm*amp*cnorm
 
         #AA = omega*mur*mu0*np.pi/kc/kc*amp
         #self.AA = omega*beta*np.pi/kc/kc/AA
@@ -167,11 +168,12 @@ class C_jwHt_TEM(mfem.VectorPyCoefficient):
     def __init__(self, sdim, phase, bdry, real=True, amp=1.0, eps=1.0, mur=1.0):
         mfem.VectorPyCoefficient.__init__(self, sdim)
         freq, omega = bdry.get_root_phys().get_freq_omega()
+        cnorm = bdry.get_root_phys().get_coeff_norm()
 
         self.real = real
         self.phase = phase  # phase !=0 for incoming wave
         self.a_vec, self.b_vec = bdry.a_vec, bdry.b_vec
-        self.AA = omega*np.sqrt(epsilon0*eps/mu0/mur)*amp
+        self.AA = omega*np.sqrt(epsilon0*eps/mu0/mur)*amp*cnorm
 
     def EvalValue(self, x):
         Hy = 1j*self.AA
@@ -221,6 +223,7 @@ class C_jwHt_CoaxTEM(mfem.VectorPyCoefficient):
     def __init__(self, sdim, phase, bdry, real=True, amp=1.0, eps=1.0, mur=1.0):
         mfem.VectorPyCoefficient.__init__(self, sdim)
         freq, omega = bdry.get_root_phys().get_freq_omega()
+        cnorm = bdry.get_root_phys().get_coeff_norm()
 
         self.real = real
         self.norm = bdry.norm
@@ -230,7 +233,7 @@ class C_jwHt_CoaxTEM(mfem.VectorPyCoefficient):
         self.phase = phase  # phase !=0 for incoming wave
         #self.AA = omega*np.sqrt(epsilon0*eps/mu0/mur)
         self.AA = coax_norm(self.a, self.b, mur, eps) * \
-            omega*np.sqrt(epsilon0*eps/mu0/mur)*amp
+            omega*np.sqrt(epsilon0*eps/mu0/mur)*amp*cnorm
 
     def EvalValue(self, x):
         r = (x - self.ctr)
