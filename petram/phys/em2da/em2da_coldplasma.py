@@ -129,21 +129,23 @@ class EM2Da_ColdPlasma(EM2Da_Domain):
 
     def get_coeffs(self):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         B, dens_e, t_e, dens_i, masses, charges, tmode = self.vt.make_value_or_expression(
             self)
         ind_vars = self.get_root_phys().ind_vars
         col_model = self.col_model
 
         from petram.phys.common.rf_dispersion_coldplasma import build_coefficients
-        coeff1, coeff2, coeff3, coeff4, coeff_nuei = build_coefficients(ind_vars, omega, B, dens_e, t_e,
-                                                                        dens_i, masses, charges, col_model,
+        coeff1, coeff2, coeff3, coeff_nuei = build_coefficients(ind_vars, omega, B, dens_e, t_e,
+                                                                        dens_i, masses, charges, col_model, cnorm,
                                                                         self._global_ns, self._local_ns,
                                                                         sdim=2, terms=self.stix_terms)
 
-        return coeff1, coeff2, coeff3, coeff4, coeff_nuei, tmode
+        return coeff1, coeff2, coeff3, coeff_nuei, tmode
 
     def add_bf_contribution(self, engine, a, real=True, kfes=0):
-        coeff1, coeff2, coeff3, coeff_stix, _coeff_nuei, tmode = self.jited_coeff
+        coeff1, coeff2, coeff3, _coeff_nuei, tmode = self.jited_coeff
         self.set_integrator_realimag_mode(real)
 
         invmu = coeff2.inv()
@@ -226,7 +228,7 @@ class EM2Da_ColdPlasma(EM2Da_Domain):
             dprint1("Add mixed contribution(imag)" + "(" + str(r) + "," + str(c) + ')'
                     + str(self._sel_index))
 
-        coeff1, coeff2, coeff3, coeff_stix, _coeff_nuei, tmode = self.jited_coeff
+        coeff1, coeff2, coeff3, _coeff_nuei, tmode = self.jited_coeff
         self.set_integrator_realimag_mode(real)
 
         invmu = coeff2.inv()

@@ -34,26 +34,31 @@ data = (('epsilonr', VtableElement('epsilonr', type='complex',
                                 default=0.0,
                                 tip="contuctivity")),)
 
-def Epsilon_Coeff(exprs, ind_vars, l, g, omega):
+
+def Epsilon_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # - omega^2 * epsilon0 * epsilonr
-    fac = -epsilon0 * omega * omega
+    fac = -epsilon0 * omega * omega * cnorm
     coeff = SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
 
-def Sigma_Coeff(exprs, ind_vars, l, g, omega):
+
+def Sigma_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # v = - 1j * self.omega * v
-    fac = - 1j * omega
+    fac = - 1j * omega * cnorm
     coeff = SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
 
-def Mu_Coeff(exprs, ind_vars, l, g, omega):
+
+def Mu_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # v = mu * v
-    fac = mu0
+    fac = mu0/cnorm
     coeff = SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return coeff
+
 
 def domain_constraints():
-   return [EM3D_Vac]
+    return [EM3D_Vac]
+
 
 class EM3D_Vac(EM3D_Domain):
     vt = Vtable(data)
@@ -71,14 +76,16 @@ class EM3D_Vac(EM3D_Domain):
 
     def get_coeffs(self):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s = self.vt.make_value_or_expression(self)
 
         ind_vars = self.get_root_phys().ind_vars
         l = self._local_ns
         g = self._global_ns
-        coeff1 = Epsilon_Coeff([e], ind_vars, l, g, omega)
-        coeff2 = Mu_Coeff([m], ind_vars, l, g, omega)
-        coeff3 = Sigma_Coeff([s], ind_vars, l, g, omega)
+        coeff1 = Epsilon_Coeff([e], ind_vars, l, g, omega, cnorm)
+        coeff2 = Mu_Coeff([m], ind_vars, l, g, omega, cnorm)
+        coeff3 = Sigma_Coeff([s], ind_vars, l, g, omega, cnorm)
 
         dprint1("epsr, mur, sigma " + str(coeff1) +
                 " " + str(coeff2) + " " + str(coeff3))
@@ -132,4 +139,3 @@ class EM3D_Vac(EM3D_Domain):
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'epsilonr')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'mur')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'sigma')
-

@@ -125,6 +125,8 @@ class EM1D_LocalKPlasma(EM1D_Vac):
 
     def get_coeffs(self):
         _freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         B, dens_e, t_e, dens_i, t_i, t_c, masses, charges, kpakpe, kpevec, ky, kz = self.vt.make_value_or_expression(
             self)
         ind_vars = self.get_root_phys().ind_vars
@@ -138,12 +140,12 @@ class EM1D_LocalKPlasma(EM1D_Vac):
 
         from petram.phys.common.rf_dispersion_lkplasma import build_coefficients
 
-        coeff1, coeff2, coeff3, coeff4 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
-                                                            dens_i, t_i, masses, charges, kpakpe, kpevec,
-                                                            kpe_mode, self.col_model,
-                                                            self._global_ns, self._local_ns,
-                                                            kpe_alg=kpe_alg, sdim=1, kymode=ky, kzmode=kz, terms=terms)
-        return coeff1, coeff2, coeff3, coeff4, ky, kz
+        coeff1, coeff2, coeff3 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
+                                                    dens_i, t_i, masses, charges, kpakpe, kpevec,
+                                                    kpe_mode, self.col_model, cnorm,
+                                                    self._global_ns, self._local_ns,
+                                                    kpe_alg=kpe_alg, sdim=1, kymode=ky, kzmode=kz, terms=terms)
+        return coeff1, coeff2, coeff3, ky, kz
 
     def add_bf_contribution(self, engine, a, real=True, kfes=0):
         if real:
@@ -151,7 +153,7 @@ class EM1D_LocalKPlasma(EM1D_Vac):
         else:
             dprint1("Add BF contribution(imag)" + str(self._sel_index))
 
-        coeff1, coeff2, coeff3, coeff4,  ky, kz = self.jited_coeff
+        coeff1, coeff2, coeff3, ky, kz = self.jited_coeff
         self.set_integrator_realimag_mode(real)
 
         # if self.has_pml():
@@ -199,7 +201,7 @@ class EM1D_LocalKPlasma(EM1D_Vac):
             dprint1("Add mixed contribution(imag)" + "(" + str(r) + "," + str(c) + ')'
                     + str(self._sel_index))
 
-        coeff1, coeff2, coeff3, coeff4, ky, kz = self.jited_coeff
+        coeff1, coeff2, coeff3, ky, kz = self.jited_coeff
         self.set_integrator_realimag_mode(real)
 
         # super(EM1D_LocalKPlasma, self).add_mix_contribution(engine, mbf, r, c, is_trans,

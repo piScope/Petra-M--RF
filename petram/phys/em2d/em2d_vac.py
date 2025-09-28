@@ -49,21 +49,21 @@ data = (('epsilonr', VtableElement('epsilonr', type='complex',
                              tip="out-of-plane wave number")),)
 
 
-def Epsilon_Coeff(exprs, ind_vars, l, g, omega):
+def Epsilon_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # - omega^2 * epsilon0 * epsilonr
-    fac = -epsilon0 * omega * omega
+    fac = -epsilon0 * omega * omega * cnorm
     return SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
 
-def Sigma_Coeff(exprs, ind_vars, l, g, omega):
+def Sigma_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # v = - 1j * self.omega * v
-    fac = - 1j * omega
+    fac = - 1j * omega * cnorm
     return SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
 
-def Mu_Coeff(exprs, ind_vars, l, g, omega):
+def Mu_Coeff(exprs, ind_vars, l, g, omega,  cnorm):
     # v = mu * v
-    fac = mu0
+    fac = mu0/cnorm
     return SCoeff(exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
 def domain_constraints():
@@ -98,14 +98,16 @@ class EM2D_Vac(EM2D_Domain, EM2D_Domain_helper):
 
     def get_coeffs(self):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, kz = self.vt.make_value_or_expression(self)
 
         ind_vars = self.get_root_phys().ind_vars
         l = self._local_ns
         g = self._global_ns
-        coeff1 = Epsilon_Coeff([e], ind_vars, l, g, omega)
-        coeff2 = Mu_Coeff([m], ind_vars, l, g, omega)
-        coeff3 = Sigma_Coeff([s], ind_vars, l, g, omega)
+        coeff1 = Epsilon_Coeff([e], ind_vars, l, g, omega, cnorm)
+        coeff2 = Mu_Coeff([m], ind_vars, l, g, omega, cnorm)
+        coeff3 = Sigma_Coeff([s], ind_vars, l, g, omega, cnorm)
 
         #dprint1("epsr, mur, sigma " + str(coeff1) + " " + str(coeff2) + " " + str(coeff3))
         return coeff1, coeff2, coeff3, kz

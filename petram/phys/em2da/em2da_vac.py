@@ -47,12 +47,13 @@ class Epsilon_o_r(PhysCoefficient):
    '''
    def __init__(self, *args, **kwargs):
        self.omega = kwargs.pop('omega', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
        super(Epsilon_o_r, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
 
        v = super(Epsilon_o_r, self).EvalValue(x)
-       v = - v * epsilon0 * self.omega * self.omega /x[0]
+       v = - v * epsilon0 * self.omega * self.omega /x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -62,11 +63,12 @@ class Epsilon_x_r(PhysCoefficient):
    '''
    def __init__(self, *args, **kwargs):
        self.omega = kwargs.pop('omega', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
        super(Epsilon_x_r, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
        v = super(Epsilon_x_r, self).EvalValue(x)
-       v = - v * epsilon0 * self.omega * self.omega * x[0]
+       v = - v * epsilon0 * self.omega * self.omega * x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -76,11 +78,12 @@ class Sigma_o_r(PhysCoefficient):
    '''
    def __init__(self, *args, **kwargs):
        self.omega = kwargs.pop('omega', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
        super(Sigma_o_r, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
        v = super(Sigma_o_r, self).EvalValue(x)
-       v = -1j * self.omega * v/x[0]
+       v = -1j * self.omega * v/x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -90,11 +93,13 @@ class Sigma_x_r(PhysCoefficient):
    '''
    def __init__(self, *args, **kwargs):
        self.omega = kwargs.pop('omega', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
+       
        super(Sigma_x_r, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
        v = super(Sigma_x_r, self).EvalValue(x)
-       v = -1j * self.omega * v * x[0]
+       v = -1j * self.omega * v * x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
 
@@ -103,11 +108,12 @@ class InvMu_x_r(PhysCoefficient):
       r/mu0/mur
    '''
    def __init__(self, *args, **kwargs):
+       self.cnorm = kwargs.pop('cnorm')
        super(InvMu_x_r, self).__init__(*args, **kwargs)
 
    def EvalValue(self, x):
        v = super(InvMu_x_r, self).EvalValue(x)
-       v = 1/mu0/v*x[0]
+       v = 1/mu0/v*x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -116,12 +122,13 @@ class InvMu_o_r(PhysCoefficient):
       1j/mu0/mur/r
    '''
    def __init__(self, *args, **kwargs):
-       self.tmode = kwargs.pop('tmode', 1.0)      
+       self.tmode = kwargs.pop('tmode', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
        super(InvMu_o_r, self).__init__(*args, **kwargs)
   
    def EvalValue(self, x):
        v = super(InvMu_o_r, self).EvalValue(x)
-       v = 1/mu0/v/x[0]
+       v = 1/mu0/v/x[0]*self.cnorm
        if self.real:  return v.real
        else: return v.imag
 
@@ -130,12 +137,14 @@ class iInvMu_m_o_r(PhysCoefficient):
       1j/mu0/mur/r
    '''
    def __init__(self, *args, **kwargs):
-       self.tmode = kwargs.pop('tmode', 1.0)      
+       self.tmode = kwargs.pop('tmode', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
+
        super(iInvMu_m_o_r, self).__init__(*args, **kwargs)
   
    def EvalValue(self, x):
        v = super(iInvMu_m_o_r, self).EvalValue(x)
-       v = 1j/mu0/v/x[0]*self.tmode
+       v = 1j/mu0/v/x[0]*self.tmode*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -144,12 +153,14 @@ class InvMu_m2_o_r(PhysCoefficient):
       1./mu0/mur/r/m^2
    '''
    def __init__(self, *args, **kwargs):
-       self.tmode = kwargs.pop('tmode', 1.0)      
+       self.tmode = kwargs.pop('tmode', 1.0)
+       self.cnorm = kwargs.pop('cnorm')
+
        super(InvMu_m2_o_r, self).__init__(*args, **kwargs)
   
    def EvalValue(self, x):
        v = super(InvMu_m2_o_r, self).EvalValue(x)
-       v = 1/mu0/v/x[0]*self.tmode*self.tmode
+       v = 1/mu0/v/x[0]*self.tmode*self.tmode*self.cnorm
        if self.real:  return v.real
        else: return v.imag
        
@@ -178,6 +189,8 @@ class EM2Da_Vac(EM2Da_Domain):
 
     def add_bf_contribution(self, engine, a, real = True, kfes=0):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, tmode = self.vt.make_value_or_expression(self)
         if not isinstance(e, str): e = str(e)
         if not isinstance(m, str): m = str(m)
@@ -190,13 +203,13 @@ class EM2Da_Vac(EM2Da_Domain):
                 dprint1("Add ND contribution(imag)" + str(self._sel_index))
             imu_x_r = InvMu_x_r(m,  self.get_root_phys().ind_vars,
                                 self._local_ns, self._global_ns,
-                                real = real)
+                                real = real, cnorm=cnorm)
             s_x_r = Sigma_x_r(s,  self.get_root_phys().ind_vars,
                               self._local_ns, self._global_ns,
-                              real = real, omega = omega)
+                              real = real, omega = omega, cnorm=cnorm)
             e_x_r = Epsilon_x_r(e, self.get_root_phys().ind_vars,
                                 self._local_ns, self._global_ns,
-                                real = real, omega = omega)
+                                real = real, omega = omega, cnorm=cnorm)
             
             self.add_integrator(engine, 'mur', imu_x_r,
                                 a.AddDomainIntegrator,
@@ -211,7 +224,7 @@ class EM2Da_Vac(EM2Da_Domain):
             if tmode != 0:
                 imu_o_r_2 = InvMu_m2_o_r(m,  self.get_root_phys().ind_vars,
                                       self._local_ns, self._global_ns,
-                                      real = real, tmode = tmode)
+                                      real = real, tmode = tmode, cnorm=cnorm)
                 self.add_integrator(engine, 'mur', imu_o_r_2,
                                     a.AddDomainIntegrator,
                                     mfem.VectorFEMassIntegrator)
@@ -223,13 +236,13 @@ class EM2Da_Vac(EM2Da_Domain):
                 dprint1("Add H1 contribution(imag)" + str(self._sel_index))
             imv_o_r_1 = InvMu_o_r(m,  self.get_root_phys().ind_vars,
                             self._local_ns, self._global_ns,
-                            real = real)
+                            real = real, cnorm=cnorm)
             e_o_r = Epsilon_o_r(e, self.get_root_phys().ind_vars,
                                 self._local_ns, self._global_ns,
-                                real = real, omega = omega)
+                                real = real, omega = omega, cnorm=cnorm)
             s_o_r = Sigma_o_r(s,  self.get_root_phys().ind_vars,
                               self._local_ns, self._global_ns,
-                              real = real, omega = omega)
+                              real = real, omega = omega, cnorm=cnorm)
             
             self.add_integrator(engine, 'mur', imv_o_r_1,
                                 a.AddDomainIntegrator,
@@ -252,6 +265,8 @@ class EM2Da_Vac(EM2Da_Domain):
                     +str(self._sel_index))
        
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, tmode = self.vt.make_value_or_expression(self)
 
         if tmode == 0: return
@@ -261,7 +276,7 @@ class EM2Da_Vac(EM2Da_Domain):
         
         imv_o_r_3 = iInvMu_m_o_r(m,  self.get_root_phys().ind_vars,
                               self._local_ns, self._global_ns,
-                              real = real, tmode = tmode)
+                              real = real, tmode = tmode, cnorm=cnorm)
 
         if r == 1 and c == 0:
             # (-a u_vec, div v_scalar)           

@@ -112,22 +112,24 @@ class EM2D_ColdPlasma(EM2D_Domain, EM2D_Domain_helper):
 
     def get_coeffs(self):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         B, dens_e, t_e, dens_i, masses, charges, kz = self.vt.make_value_or_expression(
             self)
         ind_vars = self.get_root_phys().ind_vars
         col_model = self.col_model
 
         from petram.phys.common.rf_dispersion_coldplasma import build_coefficients
-        coeff1, coeff2, coeff3, coeff4, coeff_nuei = build_coefficients(ind_vars, omega, B, dens_e, t_e,
-                                                                        dens_i, masses, charges, col_model,
+        coeff1, coeff2, coeff3, coeff_nuei = build_coefficients(ind_vars, omega, B, dens_e, t_e,
+                                                                        dens_i, masses, charges, col_model, cnorm,
                                                                         self._global_ns, self._local_ns,
                                                                         sdim=2, terms=self.stix_terms)
 
-        return coeff1, coeff2, coeff3, coeff4, coeff_nuei, kz
+        return coeff1, coeff2, coeff3, coeff_nuei, kz
 
     def get_coeffs_2(self):
         # e, m, s
-        coeff1, coeff2, coeff3, coeff_stix, _coeff_nuei, kz = self.jited_coeff
+        coeff1, coeff2, coeff3, _coeff_nuei, kz = self.jited_coeff
         '''
         coeff4 = ComplexMatrixSum(
             coeff1, coeff3)      # -> coeff4 = coeff1 + coeff3

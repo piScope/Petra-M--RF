@@ -153,6 +153,7 @@ class EM1D_Anisotropic(EM1D_Vac):
     def get_coeffs2(self, r, c):
         freq, omega = self.get_root_phys().get_freq_omega()
         cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
 
         ind_vars = self.get_root_phys().ind_vars
@@ -166,41 +167,10 @@ class EM1D_Anisotropic(EM1D_Vac):
         ec = coeff1[r, c]
         sc = coeff3[r, c]
 
-        '''
-        if not isinstance(e, str): e = str(e)
-        if not isinstance(m, str): m = str(m)
-        if not isinstance(s, str): s = str(s)
-
-        super(EM1D_Anisotropic, self).add_mix_contribution(engine, mbf, r, c, is_trans,
-                                                           real = real)
-
-        sc = make_sigma(s,  self.get_root_phys().ind_vars,
-                        self._local_ns, self._global_ns,
-                        real = real, omega = omega, component=(r,c))
-        ec = make_epsilon(e, self.get_root_phys().ind_vars,
-                          self._local_ns, self._global_ns,
-                          real = real, omega = omega, component=(r, c))
-        '''
-
         return ec, sc, ky, kz
 
     
     def add_bf_contribution(self, engine, a, real = True, kfes=0):
-        '''
-        freq, omega = self.get_root_phys().get_freq_omega()
-        e, m, s, ky, kz = self.vt.make_value_or_expression(self)
-        
-        if not isinstance(e, str): e = str(e)
-        if not isinstance(m, str): m = str(m)
-        if not isinstance(s, str): s = str(s)
-
-        sc = make_sigma(s,  self.get_root_phys().ind_vars,
-                        self._local_ns, self._global_ns,
-                        real = real, omega = omega, component=(kfes, kfes))
-        ec = make_epsilon(e, self.get_root_phys().ind_vars,
-                          self._local_ns, self._global_ns,
-                          real = real, omega = omega, component=(kfes,kfes))
-        '''
         
         ec, sc, ky, kz = self.get_coeffs2(kfes, kfes)
         self.set_integrator_realimag_mode(real)
@@ -217,24 +187,6 @@ class EM1D_Anisotropic(EM1D_Vac):
             dprint1("Add mixed contribution(imag)" + "(" + str(r) + "," + str(c) +')'
                     +str(self._sel_index))
 
-        '''
-        freq, omega = self.get_root_phys().get_freq_omega()
-        e, m, s, ky, kz = self.vt.make_value_or_expression(self)
-
-        if not isinstance(e, str): e = str(e)
-        if not isinstance(m, str): m = str(m)
-        if not isinstance(s, str): s = str(s)
-
-        super(EM1D_Anisotropic, self).add_mix_contribution(engine, mbf, r, c, is_trans,
-                                                           real = real)
-        
-        sc = make_sigma(s,  self.get_root_phys().ind_vars,
-                        self._local_ns, self._global_ns,
-                        real = real, omega = omega, component=(r,c))
-        ec = make_epsilon(e, self.get_root_phys().ind_vars,
-                          self._local_ns, self._global_ns,
-                          real = real, omega = omega, component=(r, c))
-        '''
 
         ### adding mu. this part is the same as vacuum
         super(EM1D_Anisotropic, self).add_mix_contribution(engine, mbf, r, c, is_trans,

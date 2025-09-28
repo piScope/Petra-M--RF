@@ -142,7 +142,7 @@ def panelvalue2value(panelvalue):
 #
 
 
-def make_functions(terms):
+def make_functions(terms, cnorm):
     from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
                                                                    f_collisions)
     from petram.phys.common.rf_dispersion_lkplasma_numba import (epsilonr_pl_hot_std,
@@ -181,24 +181,20 @@ def make_functions(terms):
         out = -epsilon0 * omega * omega * eps
         out = rotate_dielectric(B, kpe, out)
 
-        return out
+        return out/cnorm
 
-    def sdp(_ptx, B, dens_e, t_e, dens_i):
-        out = epsilonr_pl_cold_std(
-            omega, B, dens_i, masses, charges, t_e, dens_e, col_model)
-        return out
 
     if terms[2]:
         def mur(_ptx):
-            return mu0*np.eye(3, dtype=np.complex128)
+            return mu0*np.eye(3, dtype=np.complex128)*cnorm
     else:
         def mur(_ptx):
-            return mu0*np.eye(3, dtype=np.complex128)*1e6
+            return mu0*np.eye(3, dtype=np.complex128)*1e6*cnorm
 
     def sigma(_ptx):
-        return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
+        return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)/cnorm
 
-    return epsilon, sdp, mur, sigma
+    return epsilon, mur, sigma
 
 #
 #  functions for variables
@@ -459,7 +455,7 @@ def make_function_variable(terms):
 
 
 def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
-                       masses, charges, kpakpe, kpevec, kpe_mode, col_model,
+                       masses, charges, kpakpe, kpevec, kpe_mode, col_model, cnorm,
                        g_ns, l_ns, kpe_alg="", sdim=3,
                        tmode=None, mmode=None, kymode=None, kzmode=None, terms=None):
 
@@ -508,7 +504,7 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
     if kzmode is not None:
         params["kzmode"] = kzmode
 
-    epsilon, sdp, mur, sigma = make_functions(terms)
+    epsilon, mur, sigma = make_functions(terms, cnorm)
 
     numba_debug = False if myid != 0 else get_numba_debug()
 
@@ -532,14 +528,12 @@ def build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,
 
     mfem_coeff2 = jitter2(mur)
     mfem_coeff3 = jitter2(sigma)
-    mfem_coeff4 = jitter3(sdp)
 
     coeff1 = NumbaCoefficient(mfem_coeff1)
     coeff2 = NumbaCoefficient(mfem_coeff2)
     coeff3 = NumbaCoefficient(mfem_coeff3)
-    coeff4 = NumbaCoefficient(mfem_coeff4)
 
-    return coeff1, coeff2, coeff3, coeff4
+    return coeff1, coeff2, coeff3
 
 
 def build_variables(solvar, ss, ind_vars, omega, B, t_c, dens_e, t_e, dens_i, t_i,

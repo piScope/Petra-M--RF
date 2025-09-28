@@ -112,6 +112,8 @@ class EM3D_LocalKPlasma(EM3D_Domain):
 
     def get_coeffs(self):
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         B, dens_e, t_e, dens_i, t_i, t_c, masses, charges, kpakpe, kpevec = self.vt.make_value_or_expression(
             self)
         ind_vars = self.get_root_phys().ind_vars
@@ -124,9 +126,10 @@ class EM3D_LocalKPlasma(EM3D_Domain):
         terms = value2flags(num_ions, self.lk_terms)
 
         from petram.phys.common.rf_dispersion_lkplasma import build_coefficients
+
         coeff1, coeff2, coeff3, coeff4 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
                                                             dens_i, t_i, masses, charges, kpakpe, kpevec,
-                                                            kpe_mode, self.col_model,
+                                                            kpe_mode, self.col_model, cnorm,
                                                             self._global_ns, self._local_ns,
                                                             kpe_alg=kpe_alg, sdim=3, terms=terms)
 

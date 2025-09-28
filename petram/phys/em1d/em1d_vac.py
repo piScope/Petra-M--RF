@@ -146,7 +146,8 @@ class EM1D_Vac(EM1D_Domain):
     def add_bf_contribution(self, engine, a, real=True, kfes=0,
                             ecsc=None):
         freq, omega = self.get_root_phys().get_freq_omega()
-        cnorm = self.get_root_phys().get_coeff_norm()        
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
         if not isinstance(e, str):
             e = str(e)
@@ -181,14 +182,14 @@ class EM1D_Vac(EM1D_Domain):
         if kfes == 0:  # Ex
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                             self._local_ns, self._global_ns,
-                            factor = ky**2 + kz**2)
+                            factor = ky**2 + kz**2, cnorm=cnorm)
             
             self.add_integrator(engine, 'mur', imu, a.AddDomainIntegrator,
                                 mfem.MassIntegrator)
 
         elif kfes == 1 or kfes == 2: # Ey and Ez
             imu = InvMu(m,  self.get_root_phys().ind_vars,
-                            self._local_ns, self._global_ns)
+                            self._local_ns, self._global_ns, cnorm=cnorm)
 
             self.add_integrator(engine, 'mur', imu, a.AddDomainIntegrator,
                                 mfem.DiffusionIntegrator)
@@ -198,7 +199,7 @@ class EM1D_Vac(EM1D_Domain):
 
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                             self._local_ns, self._global_ns,
-                            factor = fac)
+                            factor = fac, cnorm=cnorm)
 
             self.add_integrator(engine, 'mur', imu, a.AddDomainIntegrator,
                                 mfem.MassIntegrator)
@@ -213,6 +214,8 @@ class EM1D_Vac(EM1D_Domain):
                     + str(self._sel_index))
 
         freq, omega = self.get_root_phys().get_freq_omega()
+        cnorm = self.get_root_phys().get_coeff_norm()
+
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
 
         if not isinstance(e, str):
@@ -225,32 +228,32 @@ class EM1D_Vac(EM1D_Domain):
         if r == 0 and c == 1:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=1j*ky)
+                        factor=1j*ky, cnorm=cnorm)
             itg = mfem.MixedScalarDerivativeIntegrator
         elif r == 0 and c == 2:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=1j*kz)
+                        factor=1j*kz, cnorm=cnorm)
             itg = mfem.MixedScalarDerivativeIntegrator
         elif r == 1 and c == 0:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=1j*ky)
+                        factor=1j*ky, cnorm=cnorm)
             itg = mfem.MixedScalarWeakDerivativeIntegrator
         elif r == 1 and c == 2:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=-ky*kz)
+                        factor=-ky*kz, cnorm=cnorm)
             itg = mfem.MixedScalarMassIntegrator
         elif r == 2 and c == 0:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=1j*kz)
+                        factor=1j*kz, cnorm=cnorm)
             itg = mfem.MixedScalarWeakDerivativeIntegrator
         elif r == 2 and c == 1:
             imu = InvMu(m,  self.get_root_phys().ind_vars,
                         self._local_ns, self._global_ns,
-                        factor=-ky*kz)
+                        factor=-ky*kz, cnorm=cnorm)
             itg = mfem.MixedScalarMassIntegrator
         else:
             assert False, "Something is wrong..if it comes here;D"

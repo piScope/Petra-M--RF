@@ -138,17 +138,17 @@ class EM2D_LocalK(EM2D_Domain, EM2D_Domain_helper):
         terms = value2flags(num_ions, self.lk_terms)
 
         from petram.phys.common.rf_dispersion_lkplasma import build_coefficients
-        coeff1, coeff2, coeff3, coeff4 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
+        coeff1, coeff2, coeff3 = build_coefficients(ind_vars, omega, B, t_c, dens_e, t_e,
                                                             dens_i, t_i, masses, charges, kpakpe, kpevec,
-                                                            kpe_mode, self.col_model,
+                                                            kpe_mode, self.col_model, cnorm,
                                                             self._global_ns, self._local_ns,
                                                             kpe_alg=kpe_alg, sdim=2, kzmode=kz, terms=terms)
 
-        return coeff1, coeff2, coeff3, coeff4, kz
+        return coeff1, coeff2, coeff3, kz
 
     def get_coeffs_2(self):
         # e, m, s
-        coeff1, coeff2, coeff3, coeff_stix, kz = self.jited_coeff
+        coeff1, coeff2, coeff3, kz = self.jited_coeff
         '''
         coeff4 = ComplexMatrixSum(
             coeff1, coeff3)      # -> coeff4 = coeff1 + coeff3

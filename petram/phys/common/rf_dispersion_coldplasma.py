@@ -162,7 +162,7 @@ default_stix_modelvalue = panelvalue2value([default_stix_option]*2 + [1])
 #
 
 
-def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges, col_model,
+def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges, col_model, cnorm,
                        g_ns, l_ns, sdim=3, terms=default_stix_option):
 
     from petram.phys.common.rf_dispersion_coldplasma_numba import (epsilonr_pl_cold_std,
@@ -211,23 +211,18 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
     """
     def epsilonr(ptx, B, dens_e, t_e, dens_i):
         out = -epsilon0 * omega * omega*epsilonr_pl_cold_generic(
-            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, use_eye3, col_model)
-        return out
-
-    def sdp(ptx, B, dens_e, t_e, dens_i):
-        out = epsilonr_pl_cold_g(
-            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, 1, col_model)
+            omega, B, dens_i, masses, charges, t_e, dens_e, sterms, use_eye3, col_model) * cnorm
         return out
 
     if np.int32(terms[0]):
         def mur(ptx):
-            return mu0*np.eye(3, dtype=np.complex128)
+            return mu0*np.eye(3, dtype=np.complex128)/cnorm
     else:
         def mur(ptx):
-            return 1e6*mu0*np.eye(3, dtype=np.complex128)
+            return 1e6*mu0*np.eye(3, dtype=np.complex128)/cnorm
 
     def sigma(ptx):
-        return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
+        return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)*cnorm
 
     def nuei(ptx, dens_e, t_e, dens_i):
         # iidx : index of ions
@@ -248,12 +243,11 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
                               debug=numba_debug)
     mfem_coeff2 = jitter2(mur)
     mfem_coeff3 = jitter2(sigma)
-    mfem_coeff4 = jitter(sdp)
+
 
     coeff1 = NumbaCoefficient(mfem_coeff1)
     coeff2 = NumbaCoefficient(mfem_coeff2)
     coeff3 = NumbaCoefficient(mfem_coeff3)
-    coeff4 = NumbaCoefficient(mfem_coeff4)
 
     dependency3 = (dens_e_coeff, t_e_coeff, dens_i_coeff)
     dependency3 = [(x.mfem_numba_coeff if isinstance(x, NumbaCoefficient) else x)
@@ -266,7 +260,7 @@ def build_coefficients(ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
         mfem_coeff5 = jitter3(nuei)
         coeff5.append(NumbaCoefficient(mfem_coeff5))
 
-    return coeff1, coeff2, coeff3, coeff4, coeff5
+    return coeff1, coeff2, coeff3, coeff5
 
 
 def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses, charges,
