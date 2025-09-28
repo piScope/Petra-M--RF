@@ -27,7 +27,7 @@ class EMPhysModule(PhysModule):
         ns = {'mu0': mu0,
               'e0': epsilon0,
               'q0': q0,
-              'c_vac': c,
+              'clight': c,
               'massu': massu,
               'chargez': chargez}
         return ns
