@@ -4,9 +4,12 @@
 
 
 '''
+from petram.phys.vtable import VtableElement, Vtable
+from petram.phys.phys_const import mu0, epsilon0
+from petram.mfem_config import use_parallel
 import numpy as np
 
-from petram.phys.phys_model  import PhysCoefficient
+from petram.phys.phys_model import PhysCoefficient
 from petram.phys.coefficient import SCoeff, MCoeff
 from petram.phys.em1d.em1d_base import EM1D_Bdry, EM1D_Domain
 from petram.phys.em1d.em1d_vac import EM1D_Vac
@@ -14,37 +17,35 @@ from petram.phys.em1d.em1d_vac import EM1D_Vac
 import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM1D_Anisotropic')
 
-from petram.mfem_config import use_parallel
 if use_parallel:
-   import mfem.par as mfem
+    import mfem.par as mfem
 else:
-   import mfem.ser as mfem
-   
-from petram.phys.vtable import VtableElement, Vtable   
-data =  (('epsilonr', VtableElement('epsilonr', type='complex',
-                                     guilabel = 'epsilonr',
-                                     suffix =[('x', 'y', 'z'), ('x', 'y', 'z')],
-                                     default = np.eye(3, 3),
-                                     tip = "relative permittivity" )),
-         ('mur', VtableElement('mur', type='complex',
-                                     guilabel = 'mur',
-                                     default = 1.0, 
-                                     tip = "relative permeability" )),
-         ('sigma', VtableElement('sigma', type='complex',
-                                     guilabel = 'sigma',
-                                     suffix =[('x', 'y', 'z'), ('x', 'y', 'z')],
-                                     default = np.zeros((3, 3)),
-                                     tip = "contuctivity" )),
-         ('ky', VtableElement('ky', type='float',
-                                     guilabel = 'ky',
-                                     default = 0. ,
-                                     no_func = True, 
-                                     tip = "wave number in the y direction" )),
-         ('kz', VtableElement('kz', type='float',
-                                     guilabel = 'kz',
-                                     default = 0.0,
-                                     no_func = True,                               
-                                     tip = "wave number in the z direction" )),)
+    import mfem.ser as mfem
+
+data = (('epsilonr', VtableElement('epsilonr', type='complex',
+                                   guilabel='epsilonr',
+                                   suffix=[('x', 'y', 'z'), ('x', 'y', 'z')],
+                                   default=np.eye(3, 3),
+                                   tip="relative permittivity")),
+        ('mur', VtableElement('mur', type='complex',
+                              guilabel='mur',
+                              default=1.0,
+                              tip="relative permeability")),
+        ('sigma', VtableElement('sigma', type='complex',
+                                guilabel='sigma',
+                                suffix=[('x', 'y', 'z'), ('x', 'y', 'z')],
+                                default=np.zeros((3, 3)),
+                                tip="contuctivity")),
+        ('ky', VtableElement('ky', type='float',
+                             guilabel='ky',
+                             default=0.,
+                             no_func=True,
+                             tip="wave number in the y direction")),
+        ('kz', VtableElement('kz', type='float',
+                             guilabel='kz',
+                             default=0.0,
+                             no_func=True,
+                             tip="wave number in the z direction")),)
 
 '''
 Expansion of matrix is as follows
@@ -56,7 +57,6 @@ Expansion of matrix is as follows
                  [e_zx  e_zy  e_zz ][Ez]
 
 '''
-from petram.phys.phys_const import mu0, epsilon0
 
 '''
 class Epsilon(PhysCoefficient):
@@ -127,27 +127,33 @@ def make_sigma(*args, **kwargs):
         else: v = v.imag
         return PhysConstant(float(v))
 '''
-def Epsilon_Coeff(exprs, ind_vars, l, g, omega):
+
+
+def Epsilon_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # - omega^2 * epsilon0 * epsilonr
     fac = -epsilon0 * omega * omega * cnorm
     return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
-def Sigma_Coeff(exprs, ind_vars, l, g, omega):
+
+def Sigma_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # v = - 1j * self.omega * v
     fac = - 1j * omega*cnorm
     return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
 
-def Mu_Coeff(exprs, ind_vars, l, g, omega):
+
+def Mu_Coeff(exprs, ind_vars, l, g, omega, cnorm):
     # v = mu * v
     fac = mu0*cnorm
-    #return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
+    # return MCoeff(3, exprs, ind_vars, l, g, return_complex=True, scale=fac)
     return SCoeff([exprs], ind_vars, l, g, return_complex=True, scale=fac)
-     
+
+
 def domain_constraints():
-   return [EM1D_Anisotropic]
+    return [EM1D_Anisotropic]
+
 
 class EM1D_Anisotropic(EM1D_Vac):
-    vt  = Vtable(data)
+    vt = Vtable(data)
     #nlterms = ['epsilonr']
 
     def get_coeffs2(self, r, c):
@@ -169,52 +175,49 @@ class EM1D_Anisotropic(EM1D_Vac):
 
         return ec, sc, ky, kz
 
-    
-    def add_bf_contribution(self, engine, a, real = True, kfes=0):
-        
+    def add_bf_contribution(self, engine, a, real=True, kfes=0):
+
         ec, sc, ky, kz = self.get_coeffs2(kfes, kfes)
         self.set_integrator_realimag_mode(real)
 
         super(EM1D_Anisotropic, self).add_bf_contribution(engine, a, real=real,
                                                           kfes=kfes, ecsc=(ec, sc))
 
-
-    def add_mix_contribution(self, engine, mbf, r, c, is_trans, real = True):
+    def add_mix_contribution(self, engine, mbf, r, c, is_trans, real=True):
         if real:
-            dprint1("Add mixed contribution(real)" + "(" + str(r) + "," + str(c) +')'
-                    +str(self._sel_index))
+            dprint1("Add mixed contribution(real)" + "(" + str(r) + "," + str(c) + ')'
+                    + str(self._sel_index))
         else:
-            dprint1("Add mixed contribution(imag)" + "(" + str(r) + "," + str(c) +')'
-                    +str(self._sel_index))
+            dprint1("Add mixed contribution(imag)" + "(" + str(r) + "," + str(c) + ')'
+                    + str(self._sel_index))
 
-
-        ### adding mu. this part is the same as vacuum
+        # adding mu. this part is the same as vacuum
         super(EM1D_Anisotropic, self).add_mix_contribution(engine, mbf, r, c, is_trans,
-                                                           real = real)
-        
-        ec, sc, ky, kz = self.get_coeffs2(r, c) 
-        self.set_integrator_realimag_mode(real)       
+                                                           real=real)
+
+        ec, sc, ky, kz = self.get_coeffs2(r, c)
+        self.set_integrator_realimag_mode(real)
 
         self.add_integrator(engine, 'epsilonr', ec, mbf.AddDomainIntegrator,
                             mfem.MixedScalarMassIntegrator)
         self.add_integrator(engine, 'sigma', sc, mbf.AddDomainIntegrator,
-                                mfem.MixedScalarMassIntegrator)
-
+                            mfem.MixedScalarMassIntegrator)
 
     def add_domain_variables(self, v, n, suffix, ind_vars):
         from petram.helper.variables import add_constant
-        
+
         e, m, s, ky, kz = self.vt.make_value_or_expression(self)
-        
-        if len(self._sel_index) == 0: return
+
+        if len(self._sel_index) == 0:
+            return
 
         add_constant(v, 'ky', suffix, np.float64(ky),
-                     domains = self._sel_index,
-                     gdomain = self._global_ns)
-        
+                     domains=self._sel_index,
+                     gdomain=self._global_ns)
+
         add_constant(v, 'kz', suffix, np.float64(kz),
-                     domains = self._sel_index,
-                     gdomain = self._global_ns)
+                     domains=self._sel_index,
+                     gdomain=self._global_ns)
 
         self.do_add_matrix_expr(v, suffix, ind_vars, 'epsilonr', e)
         self.do_add_scalar_expr(v, suffix, ind_vars, 'smur', m, add_diag=3)
@@ -224,7 +227,3 @@ class EM1D_Anisotropic(EM1D_Vac):
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'epsilonr')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'mur')
         self.do_add_matrix_component_expr(v, suffix, ind_vars, var, 'sigma')
-
-
-
-    
