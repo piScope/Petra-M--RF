@@ -43,6 +43,7 @@ EM2Da : Axis- symmetric Frequency domain Maxwell equation.
      EM2Da_Continuity  : Continuitiy
 
 '''
+from petram.phys.vtable import VtableElement, Vtable
 import numpy as np
 import traceback
 
@@ -55,12 +56,11 @@ from petram.phys.em2da.em2da_vac import EM2Da_Vac
 import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM2DaModel')
 
-from petram.phys.vtable import VtableElement, Vtable
 
 class EM2Da_DefDomain(EM2Da_Vac):
     can_delete = False
     nlterms = []
-    #vt  = Vtable(data1)
+    # vt  = Vtable(data1)
     # do not use vtable here, since we want to use
     # vtable defined in EM3D_Vac in add_bf_conttribution
 
@@ -183,7 +183,7 @@ class EM2Da(EMPhysModule):
 
     def _has_div_constraint(self):
         return False
-        #from .em2da_div import EM2Da_Div
+        # from .em2da_div import EM2Da_Div
         # for mm in self['Domain'].iter_enabled():
         #    if isinstance(mm, EM2Da_Div): return True
         # return False
@@ -198,19 +198,17 @@ class EM2Da(EMPhysModule):
 
     def panel1_param(self):
         panels = super(EM2Da, self).panel1_param()
-        panels.extend(#[self.make_param_panel('freq',  self.freq_txt),
-                       ["independent vars.", self.ind_vars, 0, {}],
+        panels.extend([["independent vars.", self.ind_vars, 0, {}],
                        ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
                        ["dep. vars.", ','.join(self.dep_vars), 2, {}],
                        ["ns vars.", ','.join(EM2Da.der_vars_base), 2, {}], ])
-
         return panels
 
     def get_panel1_value(self):
         names = ', '.join([x for x in self.dep_vars])
         names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM2Da, self).get_panel1_value()
-        #val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
+        # val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
         #            names, names2, ])
         val.extend([self.ind_vars, self.dep_vars_suffix,
                     names, names2, ])
@@ -219,7 +217,7 @@ class EM2Da(EMPhysModule):
 
     def import_panel1_value(self, v):
         v = super(EM2Da, self).import_panel1_value(v)
-        #self.freq_txt = str(v[0])
+        # self.freq_txt = str(v[0])
         self.ind_vars = str(v[0])
         self.dep_vars_suffix = str(v[1])
 
