@@ -79,6 +79,8 @@ class EMPhysModule(PhysModule):
         from petram.helper.variables import add_constant
 
         if name == self.dep_vars[0]:
+            suffix = self.dep_vars_suffix
+
             freq, omega = self.get_freq_omega()
             add_constant(v, 'freq', suffix, freq)
             add_constant(v, 'omega', suffix, np.float64(omega))
