@@ -74,3 +74,16 @@ class EMPhysModule(PhysModule):
             norm = 1.0
             dprint1("Error, Coefficeint normalization be a scalr real value")
         return norm
+
+    def add_variables(self, v, name, solr, soli=None):
+        from petram.helper.variables import add_constant
+
+        if name == self.dep_vars[0]:
+            freq, omega = self.get_freq_omega()
+            add_constant(v, 'freq', suffix, freq)
+            add_constant(v, 'omega', suffix, np.float64(omega))
+
+            norm = self.get_coeff_norm()
+            add_constant(v, 'rowscale', suffix, norm)
+
+        return v

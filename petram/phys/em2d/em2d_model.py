@@ -65,7 +65,7 @@ dprint1, dprint2, dprint3 = debug.init_dprints('EM2DModel')
 class EM2D_DefDomain(EM2D_Vac):
     can_delete = False
     nlterms = []
-    #vt  = Vtable(data1)
+    # vt  = Vtable(data1)
     # do not use vtable here, since we want to use
     # vtable defined in EM2D_Vac in add_bf_conttribution
 
@@ -202,11 +202,11 @@ class EM2D(EMPhysModule):
 
     def panel1_param(self):
         panels = super(EM2D, self).panel1_param()
-        panels.extend([#self.make_param_panel('freq',  self.freq_txt),
-                       ["independent vars.", self.ind_vars, 0, {}],
-                       ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
-                       ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["ns vars.", ','.join(EM2D.der_vars_base), 2, {}], ])
+        panels.extend([  # self.make_param_panel('freq',  self.freq_txt),
+            ["independent vars.", self.ind_vars, 0, {}],
+            ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
+            ["dep. vars.", ','.join(self.dep_vars), 2, {}],
+            ["ns vars.", ','.join(EM2D.der_vars_base), 2, {}], ])
 
         return panels
 
@@ -214,7 +214,7 @@ class EM2D(EMPhysModule):
         names = ', '.join([x for x in self.dep_vars])
         names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM2D, self).get_panel1_value()
-        #val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
+        # val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
         #            names, names2, ])
         val.extend([self.ind_vars, self.dep_vars_suffix,
                     names, names2, ])
@@ -222,7 +222,7 @@ class EM2D(EMPhysModule):
 
     def import_panel1_value(self, v):
         v = super(EM2D, self).import_panel1_value(v)
-        #self.freq_txt = str(v[0])
+        # self.freq_txt = str(v[0])
         self.ind_vars = str(v[0])
         self.dep_vars_suffix = str(v[1])
 
@@ -264,6 +264,8 @@ class EM2D(EMPhysModule):
 
         from petram.phys.em2da.eval_deriv import eval_curl, eval_grad
 
+        v = super(EM2D, self).add_variables(v, name, solr, soli)
+
         def eval_curlExy(gfr, gfi=None):
             gfr, gfi, extra = eval_curl(gfr, gfi)
             return gfr, gfi, extra
@@ -274,10 +276,6 @@ class EM2D(EMPhysModule):
 
         ind_vars = [x.strip() for x in self.ind_vars.split(',')]
         suffix = self.dep_vars_suffix
-
-        freq, omega = self.get_freq_omega()
-        add_constant(v, 'omega', suffix, np.float64(omega),)
-        add_constant(v, 'freq', suffix, np.float64(freq),)
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)

@@ -261,6 +261,8 @@ class EM2Da(EMPhysModule):
 
         from petram.phys.em2da.eval_deriv import eval_curl, eval_grad
 
+        v = super(EM2Da, self).add_variables(v, name, solr, soli)
+
         def eval_curlEt(gfr, gfi=None):
             gfr, gfi, extra = eval_curl(gfr, gfi)
             return gfr, gfi, extra
@@ -271,10 +273,6 @@ class EM2Da(EMPhysModule):
 
         ind_vars = [x.strip() for x in self.ind_vars.split(',')]
         suffix = self.dep_vars_suffix
-
-        freq, omega = self.get_freq_omega()
-        add_constant(v, 'omega', suffix, np.float64(omega),)
-        add_constant(v, 'freq', suffix, np.float64(freq),)
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)

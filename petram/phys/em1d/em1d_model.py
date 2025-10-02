@@ -24,6 +24,7 @@ EM1d : 1D Frequency domain Maxwell equation.
   Note: the above modules are plan. Not fully implemented.
 
 '''
+from petram.phys.vtable import VtableElement, Vtable
 import numpy as np
 import traceback
 
@@ -36,12 +37,11 @@ from petram.phys.em1d.em1d_vac import EM1D_Vac
 import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM1DModel')
 
-from petram.phys.vtable import VtableElement, Vtable
 
 class EM1D_DefDomain(EM1D_Vac):
     can_delete = False
     nlterms = []
-    #vt  = Vtable(data1)
+    # vt  = Vtable(data1)
     # do not use vtable here, since we want to use
     # vtable defined in EM3D_Vac in add_bf_conttribution
 
@@ -181,7 +181,7 @@ class EM1D(EMPhysModule):
 
     def _has_div_constraint(self):
         return False
-        #from .em1d_div import EM1D_Div
+        # from .em1d_div import EM1D_Div
         # for mm in self['Domain'].iter_enabled():
         #    if isinstance(mm, EM1D_Div): return True
         # return False
@@ -197,19 +197,19 @@ class EM1D(EMPhysModule):
 
     def panel1_param(self):
         panels = super(EM1D, self).panel1_param()
-        panels.extend([#self.make_param_panel('freq',  self.freq_txt),
-                       ["independent vars.", self.ind_vars, 0, {}],
-                       ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
-                       ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["ns vars.", ','.join(self.der_vars), 2, {}],
-                       ["use H1 for Ex", self.use_h1_x, 3, {"text": ' '}], ])
+        panels.extend([  # self.make_param_panel('freq',  self.freq_txt),
+            ["independent vars.", self.ind_vars, 0, {}],
+            ["dep. vars. suffix", self.dep_vars_suffix, 0, {}],
+            ["dep. vars.", ','.join(self.dep_vars), 2, {}],
+            ["ns vars.", ','.join(self.der_vars), 2, {}],
+            ["use H1 for Ex", self.use_h1_x, 3, {"text": ' '}], ])
         return panels
 
     def get_panel1_value(self):
         names = ','.join([x for x in self.dep_vars])
         names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM1D, self).get_panel1_value()
-        #val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
+        # val.extend([self.freq_txt, self.ind_vars, self.dep_vars_suffix,
         #            names, names2, self.use_h1_x])
         val.extend([self.ind_vars, self.dep_vars_suffix,
                     names, names2, self.use_h1_x])
@@ -244,7 +244,7 @@ class EM1D(EMPhysModule):
         return []
 
     def get_possible_pair(self):
-        #from em3d_floquet       import EM3D_Floquet
+        # from em3d_floquet       import EM3D_Floquet
         return []
 
     def get_possible_point(self):
@@ -261,14 +261,12 @@ class EM1D(EMPhysModule):
 
         from petram.phys.em1d.eval_deriv import eval_grad
 
+        v = super(EM1D, self).add_variables(v, name, solr, soli)
+
         ind_vars = [x.strip() for x in self.ind_vars.split(',')]
         suffix = self.dep_vars_suffix
 
         from petram.helper.variables import TestVariable
-
-        freq, omega = self.get_freq_omega()
-        add_constant(v, 'omega', suffix, np.float64(omega),)
-        add_constant(v, 'freq', suffix, np.float64(freq),)
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)

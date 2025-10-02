@@ -47,10 +47,11 @@ from petram.phys.em3d.em3d_vac import EM3D_Vac
 import petram.debug as debug
 dprint1, dprint2, dprint3 = debug.init_dprints('EM3DModel')
 
+
 class EM3D_DefDomain(EM3D_Vac):
     can_delete = False
     nlterms = []
-    #vt  = Vtable(data1)
+    # vt  = Vtable(data1)
     # do not use vtable here, since we want to use
     # vtable defined in EM3D_Vac in add_bf_conttribution
 
@@ -212,11 +213,11 @@ class EM3D(EMPhysModule):
     def panel1_param(self):
         panels = super(EM3D, self).panel1_param()
         a, b = self.get_var_suffix_var_name_panel()
-        panels.extend([#self.make_param_panel('freq',  self.freq_txt),
-                       ["independent vars.", self.ind_vars, 0, {}],
-                       a,
-                       ["dep. vars.", ','.join(self.dep_vars), 2, {}],
-                       ["ns vars.", ','.join(EM3D.der_var_base), 2, {}], ])
+        panels.extend([  # self.make_param_panel('freq',  self.freq_txt),
+            ["independent vars.", self.ind_vars, 0, {}],
+            a,
+            ["dep. vars.", ','.join(self.dep_vars), 2, {}],
+            ["ns vars.", ','.join(EM3D.der_var_base), 2, {}], ])
 
         return panels
 
@@ -224,14 +225,14 @@ class EM3D(EMPhysModule):
         names = ', '.join(self.dep_vars)
         names2 = ', '.join(list(self.get_default_ns()))
         val = super(EM3D, self).get_panel1_value()
-        val.extend([#self.freq_txt,
-                    self.ind_vars, self.dep_vars_suffix,
-                    names, names2, ])
+        val.extend([  # self.freq_txt,
+            self.ind_vars, self.dep_vars_suffix,
+            names, names2, ])
         return val
 
     def import_panel1_value(self, v):
         v = super(EM3D, self).import_panel1_value(v)
-        #self.freq_txt = str(v[0])
+        # self.freq_txt = str(v[0])
         self.ind_vars = str(v[0])
         self.dep_vars_suffix = str(v[1])
 
@@ -306,6 +307,8 @@ class EM3D(EMPhysModule):
 
         from petram.helper.eval_deriv import eval_curl
 
+        v = super(EM3D, self).add_variables(v, name, solr, soli)
+
         freq, omega = self.get_freq_omega()
 
         def evalB(gfr, gfi=None):
@@ -322,7 +325,7 @@ class EM3D(EMPhysModule):
         suffix = self.dep_vars_suffix
 
         from petram.helper.variables import TestVariable
-        #v['debug_test'] =  TestVariable()
+        # v['debug_test'] =  TestVariable()
 
         add_coordinates(v, ind_vars)
         add_surf_normals(v, ind_vars)
@@ -330,11 +333,6 @@ class EM3D(EMPhysModule):
         from petram.phys.phys_const import mu0, epsilon0, q0
 
         if name.startswith('E'):
-            freq, omega = self.get_freq_omega()
-            add_constant(v, 'freq', suffix, freq)
-            add_constant(v, 'omega', suffix, np.float64(omega))
-            #add_constant(v, 'mu0', '', mu0)
-            #add_constant(v, 'e0', '', epsilon0)
 
             add_components(v, 'E', suffix, ind_vars, solr, soli)
             add_components(v, 'B', suffix, ind_vars, solr, soli,
@@ -358,7 +356,7 @@ class EM3D(EMPhysModule):
                             '(conj(Ex)*By - conj(Ey)*Bx)/mu0',
                             ['B', 'E'], 2)
 
-            #e = - epsion * w^2 - i * sigma * w
+            # e = - epsion * w^2 - i * sigma * w
             # Jd : displacement current  = -i omega* e0 er E
             addc_expression(v, 'Jd', suffix, ind_vars,
                             '(-1j*(dot(epsilonr, E))*freq*2*pi*e0)[0]',
