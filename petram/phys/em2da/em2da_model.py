@@ -2,21 +2,21 @@
 '''
 EM2Da : Axis- symmetric Frequency domain Maxwell equation.
 
-    This module is meant to solve 
+    This module is meant to solve
 
-    (curl v, curl u) + (v, e u) 
-           - (v, n x (1/mu curl u)_s = i w (jext, u) 
+    (curl v, curl u) + (v, e u)
+           - (v, n x (1/mu curl u)_s = i w (jext, u)
 
-    We decompose the r-phi-z filed coponents in toroidal and poloidal 
+    We decompose the r-phi-z filed coponents in toroidal and poloidal
     components, Et and Ep. Note that Ep is a vector and Et is not Ephi
 
     Ep = (Er, Ez) and Et= rEphi, where Ep is Nedelec and Et is H1
 
-    curl-curl is decomposed to 
+    curl-curl is decomposed to
        r (curl Ep, curl Wp) + 1/r (m Et - div Ep,  m Wt - div Wp),
 
-    mass 
-       e (r (Ep, Wp) + 1/r (Et, Wt)), 
+    mass
+       e (r (Ep, Wp) + 1/r (Et, Wt)),
 
     where e = - epsion * w^2 - i * sigma * w, w is frequency,
     and  mu, epislon, and simga is regular EM parameters.
@@ -27,7 +27,7 @@ EM2Da : Axis- symmetric Frequency domain Maxwell equation.
     exp(-i w t) is assumed.
 
  *sigma
-  Domain:   
+  Domain:
      EM2Da_Anisotropic : tensor dielectric
      EM2Da_Vac         : scalar dielectric
      EM2Da_ExtJ        : external current
@@ -143,7 +143,7 @@ class EM2Da(EMPhysModule):
     def dep_vars(self):
         '''
         list of dependent variables, for example.
-           [Et, rEf]      
+           [Et, rEf]
            [Et, rEf, psi]
         '''
         ret = self.dep_vars_base
@@ -153,7 +153,7 @@ class EM2Da(EMPhysModule):
     def dep_vars0(self):
         '''
         list of dependent variables, for example.
-           [Et, rEf]      
+           [Et, rEf]
            [Et, rEf, psi]
         '''
         ret = self.dep_vars_base
@@ -214,7 +214,7 @@ class EM2Da(EMPhysModule):
         #            names, names2, ])
         val.extend([self.ind_vars, self.dep_vars_suffix,
                     names, names2, ])
-        
+
         return val
 
     def import_panel1_value(self, v):
