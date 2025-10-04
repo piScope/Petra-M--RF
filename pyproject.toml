@@ -1,0 +1,36 @@
+[project]
+name = "PetraM_RF"
+license = "GPL-3.0-only"
+description='PetraM RF physcis package'
+authors = [ { name = "S. Shiraiwa" } ]
+maintainers = [ { name = "S. Shiraiwa", email = "shiraiwa@princeton.edu" } ]
+keywords = ["scientific computing", "python visualzation", "finite element method", "MFEM"]
+readme = "README.md"
+requires-python = ">=3.10"
+version="2.0.0"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "mfem >= 4.7",
+    "PetraM_Base >= 2.5.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/PetraM_RF"
+"Download" = "https://github.com/PetraM_RF"
+
+[build-system]
+requires = [
+        "setuptools>=80.0.1",
+        "pip>=25.1.0", 
+]
+
+[tool.setuptools]
+# ...
+package-dir = {"" = "python"}
