@@ -77,7 +77,7 @@ def SPD_el_b(w, Bnorm, dens, wcol):
 def SPD_ion(w, Bnorm, dens, mass, charge, nu_ei):
     qi = charge*q_base
     mass_eff = (1 + 1j*nu_ei/w)*mass
-    wp2 = dens * q_base**2/(mass_eff*e0)
+    wp2 = dens * qi**2/(mass_eff*e0)
     wc = qi * Bnorm/mass_eff
 
     Pterm = -wp2/w**2
@@ -92,7 +92,7 @@ def SPD_ion_b(w, Bnorm, dens, mass, charge, wcol):
 
     qi = charge*q_base
 
-    wp2 = dens * q_base**2/(mass*e0)
+    wp2 = dens * qi**2/(mass*e0)
     wc = qi * Bnorm/mass
     w2 = w + 1j*wcol
 
