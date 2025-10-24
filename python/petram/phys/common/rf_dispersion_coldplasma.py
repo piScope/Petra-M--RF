@@ -369,7 +369,7 @@ def build_variables(solvar, ss, ind_vars, omega, B, dens_e, t_e, dens_i, masses,
     def sigma(*_ptx):
         return - 1j*omega * np.zeros((3, 3), dtype=np.complex128)
 
-    def nuei(*_ptx, dens_e=dens_e, t_e=t_e, dens_i=dens_i):
+    def nuei(*_ptx, B=None, dens_e=None, t_e=None, dens_i=None):
         from petram.phys.common.rf_dispersion_coldplasma_numba import f_collisions
 
         nuei = f_collisions(dens_i, charges, t_e, dens_e)
