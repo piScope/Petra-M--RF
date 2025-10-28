@@ -1,5 +1,5 @@
 [project]
-name = "PetraM_RF"
+name = "petram_rf"
 license = "GPL-3.0-only"
 description='PetraM RF physcis package'
 authors = [ { name = "S. Shiraiwa" } ]
@@ -17,8 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "mfem >= 4.7",
-    "PetraM_Base >= 2.5.0"
+    "petram >= 2.5.0"
 ]
 
 [project.urls]
