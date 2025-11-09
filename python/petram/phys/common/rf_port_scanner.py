@@ -53,6 +53,9 @@ class PortScanner(DefaultParametricScanner):
     def get_probes(self):
         return [self.smat_name]
 
+    def format_data(self, data):
+        return "port "+self.port[data]
+
     def set_data_from_model(self, root):
         from petram.phys.em3d.em3d_port import EM3D_Port
         from petram.phys.em3d.em3d_portarray import EM3D_PortArray
