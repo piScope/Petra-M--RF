@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/PetraM_RF"
-"Download" = "https://github.com/PetraM_RF"
+"Homepage" = "https://github.com/Petra-M--RF"
+"Download" = "https://github.com/Petra-M--RF"
 
 [build-system]
 requires = [
