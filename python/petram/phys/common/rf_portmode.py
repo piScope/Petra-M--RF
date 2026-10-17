@@ -27,7 +27,7 @@ from numpy import sin, cos, exp, sqrt, array, sum, pi, log, cross, arctan2
 from petram.phys.phys_const import epsilon0, mu0
 
 import petram.debug as debug
-dprint1, dprint2, dprint3 = debug.init_dprints('EM3D_PortMode')
+dprint1, dprint2, dprint3 = debug.init_dprints('EM_PortMode')
 
 if use_parallel:
     import mfem.par as mfem
@@ -42,9 +42,9 @@ else:
     nicePrint = dprint1
 
 '''
-   rectangular wg TE
+ defined modes
 '''
-
+port_modes = ["TE", "TEM", "Coax(TEM)", "Circular(TE)"]
 
 def get_portmode_coeff_cls(mode):
     if mode == 'TEM':
@@ -59,6 +59,9 @@ def get_portmode_coeff_cls(mode):
         raise NotImplementedError(
             "you must implement this mode")
 
+'''
+   rectangular wg TE
+'''
 
 def TE_norm(m, n, a, b, alpha, gamma):
     if m == 0:
