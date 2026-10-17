@@ -1,15 +1,19 @@
 '''
   Definition of 3D port modes
 
-  TE Mode
+  TE Mode:
     Expression are based on Microwave Engineering p122 - p123.
     Note that it consists from two terms
        1)  \int dS W \dot n \times iwH (VectorFETangentIntegrator does this)
        2)  an weighting to evaulate mode amplutude from the E field
            on a boundary
-  TEM Mode
+  TEM Mode:
        E is parallel to the periodic edge
        Mode number is ignored (of course)
+
+  CoaxTEM:
+
+  CircularTE:
 
   About sign of port phasing.
        positive phasing means the incoming wave appears later (phase delay)

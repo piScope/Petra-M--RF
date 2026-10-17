@@ -41,6 +41,8 @@ else:
        2)  an weighting to evaulate mode amplutude from the E field
            on a boundary
 
+  Circular Mode:
+    Circular port centered at axis.
 
 '''
 
@@ -240,7 +242,7 @@ class EM2Da_Port(EM2Da_Bdry):
     def panel1_param(self):
         return ([["port id", str(self.port_idx), 0, {}],
                  ["mode (n=0 only)", self.mode, 4, {"readonly": True,
-                                                    "choices": ["TE", ]}],
+                                                    "choices": ["TE", "Circular"]}],
                  ["m/n", ','.join(str(x) for x in self.mn), 0, {}], ] +
                 self.vt.panel_param(self))
 
@@ -329,9 +331,18 @@ class EM2Da_Port(EM2Da_Bdry):
 
         vv = np.vstack([mesh.GetVertexArray(i) for i in ivert])
         self.ctr = (vv[0] + vv[-1]) / 2.0
-        dprint1("Center " + list(self.ctr).__repr__())
 
-    # rectangular port
+        rmin = np.min(vv[:, 0])
+        rmax = np.max(vv[:, 0])        
+        rc = (rmax + rmin)/2.0        
+        zmax = np.min(vv[:, 2])                
+        zmin = np.max(vv[:, 2])                
+        zc = (zmax + zmin)/2.0
+
+        dprint1("Center: ",  list(self.ctr).__repr__())
+        dprint1("rmin/rmax: ",  rmin, rmax)
+
+        # rectangular port
         self.a_vec = (vv[0] - vv[-1])
         self.a = np.sqrt(np.sum(self.a_vec**2))
         self.a_vec /= self.a
@@ -352,6 +363,37 @@ class EM2Da_Port(EM2Da_Bdry):
             dprint1("H field pattern")
             for p in vv:
                 dprint1(p.__repr__() + ' : ' + c2.EvalValue(p).__repr__())
+
+        if str(self.mode).upper().strip() in ['TE', 'TM', 'TEM']:
+            self.a = geom_data["a"]
+            self.a_vec = geom_data["a_vec"]
+            self.b = geom_data["b"]
+            self.b_vec = geom_data["b_vec"]
+            self.c = geom_data["c"]
+            dprint1("Long Edge  " + self.a.__repr__())
+            dprint1("Long Edge Vec." + list(self.a_vec).__repr__())
+            dprint1("Short Edge  " + self.b.__repr__())
+            dprint1("Short Edge Vec." + list(self.b_vec).__repr__())
+
+        elif self.mode == 'Coax(TEM)':
+            # coax port is 
+            assert zc == zmin, "Port should be horizontal edge"
+            assert zc == zmax, "Port should be horizontal edge"
+
+            self.a = rmin
+            self.b = rmax
+            self.ctr = np.array((0., 0., zc))
+            self.ax1 = np.array((1., 0., 0.)
+            self.ax2 = geom_data["ax2"]
+
+        elif self.mode == 'Circular(TE)':
+            geom_data, vv = analyze_circular_geom(mesh, ibe, norm, rptx)
+            self.a = geom_data["a"]
+            self.ctr = geom_data["ctr"]
+            self.ax1 = geom_data["ax1"]
+            self.ax2 = geom_data["ax2"]
+
+
 
     def get_h_coeff_cls(self):
         m = sys.modules[__name__]
