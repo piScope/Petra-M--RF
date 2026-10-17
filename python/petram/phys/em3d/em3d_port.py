@@ -25,7 +25,7 @@ dprint1, dprint2, dprint3 = debug.init_dprints('EM3D_Port')
 if use_parallel:
     import mfem.par as mfem
     from mfem.common.mpi_debug import nicePrint
-    from petram.helper.mpi_recipes import *
+
 else:
     import mfem.ser as mfem
     nicePrint = dprint1
@@ -93,9 +93,10 @@ class EM3D_Port(EM3D_Bdry):
         return v
 
     def panel1_param(self):
+        from petram.phys.common.rf_portmode import port_modes
         return ([["port id", str(self.port_idx), 0, {}],
                  ["mode", self.mode, 4, {"readonly": True,
-                                         "choices": ["TE", "TEM", "Coax(TEM)", "Circular(TE)"]}],
+                                         "choices": port_modes}],
                  ["m/n", ','.join(str(x) for x in self.mn), 0, {}],
                  ["ref. pt.", "", 0, {}],
                  ["fixed excitaiton", True, 3, {"text": ""}],] +
@@ -308,14 +309,14 @@ class EM3D_Port(EM3D_Bdry):
         #
         lf1 = engine.new_lf(fes)
         Ht1 = C_jwHt(3, self, real=True, eps=eps, mur=mur, cnorm=cnorm,
-                     m= self.mn[0], n=self.mn[1])
+                     m=self.mn[0], n=self.mn[1])
         Ht2 = self.restrict_coeff(Ht1, engine, vec=True)
         intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht2)
         lf1.AddBoundaryIntegrator(intg)
         lf1.Assemble()
         lf1i = engine.new_lf(fes)
         Ht3 = C_jwHt(3, self, real=False, eps=eps, mur=mur, cnorm=cnorm,
-                     m= self.mn[0], n=self.mn[1])
+                     m=self.mn[0], n=self.mn[1])
         Ht4 = self.restrict_coeff(Ht3, engine, vec=True)
         intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht4)
         lf1i.AddBoundaryIntegrator(intg)
@@ -326,7 +327,7 @@ class EM3D_Port(EM3D_Bdry):
         #
         lf2r = engine.new_lf(fes)
         Etr = C_Et(3, self, real=True, eps=eps, mur=mur,
-                  m=self.mn[0], n=self.mn[1])
+                   m=self.mn[0], n=self.mn[1])
         Etr = self.restrict_coeff(Etr, engine, vec=True)
         intg = mfem.VectorFEDomainLFIntegrator(Etr)
         lf2r.AddBoundaryIntegrator(intg)
@@ -351,23 +352,22 @@ class EM3D_Port(EM3D_Bdry):
 
         # transfer x and lf2 to True DoF space to evaluate inner-product
         et = engine.x2X(xr).GetDataArray() + \
-                1j * engine.x2X(xi).GetDataArray()
+            1j * engine.x2X(xi).GetDataArray()
         vec = engine.b2B(lf2r).GetDataArray() -  \
-                1j * engine.b2B(lf2i).GetDataArray() # complex conjugate
+            1j * engine.b2B(lf2i).GetDataArray()  # complex conjugate
         weight = np.sum(et.dot(vec))
         if use_parallel:
             weight = np.sum(allgather(weight))
 
-        #nicePrint("wegiht ", weight)
+        # nicePrint("wegiht ", weight)
 
         #  t1
         t1 = LF2PyVec(lf1, lf1i)
-        #t1 *= -1
+        # t1 *= -1
         t1 = PyVec2PyMat(t1)
 
-
         # t2
-        lf2i *= -1 # complex conjugate
+        lf2i *= -1  # complex conjugate
         t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
         t2 *= -1. / weight
         t2 = PyVec2PyMat(t2.transpose())
@@ -375,7 +375,7 @@ class EM3D_Port(EM3D_Bdry):
 
         # t3
         t3 = IdentityPyMat(1)
-        #t3 = IdentityPyMat(1, diag=-1)
+        # t3 = IdentityPyMat(1, diag=-1)
         # t4
         inc_wave = inc_amp * np.exp(1j * inc_phase / 180. * np.pi)
         phase = np.angle(inc_wave) * 180 / np.pi
@@ -395,4 +395,4 @@ class EM3D_Port(EM3D_Bdry):
         '''
         return (t1, t2, t3, t4, True)
 
-        #return (None, t2, t3, t4, True)
+        # return (None, t2, t3, t4, True)
