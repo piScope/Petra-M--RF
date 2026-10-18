@@ -208,33 +208,64 @@ class H_Ephi_rz(mfem.VectorPyCoefficient):
 class H_Ephi_phi(mfem.PyCoefficient):
     pass
 
-def get_rz_cls(basecls):
+def get_rz_cls(basecls, mode="H"):
     # use 3D version of port mode behind. Then give r and z components.
-    class cls_rz(mfem.VectorPyCoefficient):
-        def __init__(self, *args, **kwags):
-            self.base = basecls(3, *args[1:], **kwags) 
-            mfem.VectorPyCoefficient.__init__(self, args[0])
+    if mode == "H":
+        class cls_rz(mfem.VectorPyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args[1:], **kwags) 
+                bdr = args[1]
+                self.norm = np.array((bdr.norm[0], 0.0, bdr.norm[1]))
+                mfem.VectorPyCoefficient.__init__(self, args[0])
 
-        def EvalValue(self, x):
-            xx = np.array((x[0], 0, x[1]))
-            val = self.base.EvalValue(xx)
-            print("r, z component", x[0], val[0], val[2])
-            return x[0]*val[0], x[0]*val[2]
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                print("r, z component", self.norm, x[0], val[0], val[2])
+                val = np.cross(self.norm, val)
+                return x[0]*val[0], x[0]*val[2]
+                #return val[0], val[2]
+    else:
+        class cls_rz(mfem.VectorPyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args[1:], **kwags) 
+                mfem.VectorPyCoefficient.__init__(self, args[0])
+
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                print("r, z component", x[0], val[0], val[2])
+                return val[0], val[2]
         
     return cls_rz
 
-def get_phi_cls(basecls):
+def get_phi_cls(basecls, mode="H"):
     # use 3D version of port mode behind. Then give r * Aphi
-    class cls_phi(mfem.PyCoefficient):
-        def __init__(self, *args, **kwags):
-            self.base = basecls(3, *args, **kwags) 
-            mfem.PyCoefficient.__init__(self)            
+    if mode == "H":    
+            class cls_phi(mfem.PyCoefficient):
+                def __init__(self, *args, **kwags):
+                    self.base = basecls(3, *args, **kwags) 
+                    bdr = args[0]
+                    self.norm = np.array((bdr.norm[0], 0.0, bdr.norm[1]))
+                    mfem.PyCoefficient.__init__(self)            
 
-        def EvalValue(self, x):
-            xx = np.array((x[0], 0, x[1]))
-            val = self.base.EvalValue(xx)
-            print("phi component", x[0], x[0]*val[1])
-            return val[1]
+                def EvalValue(self, x):
+                    xx = np.array((x[0], 0, x[1]))
+                    val = self.base.EvalValue(xx)
+                    val = np.cross(self.norm, val)                    
+                    print("phi component", x[0], val[1])
+                    return val[1]
+    else:
+        class cls_phi(mfem.PyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args, **kwags) 
+                mfem.PyCoefficient.__init__(self)            
+
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                print("phi component", x[0], x[0]*val[1])
+                return x[0]*val[1]
 
     return cls_phi
 
@@ -435,8 +466,8 @@ class EM2Da_Port(EM2Da_Bdry):
 
         _Et, jwHt = get_portmode_coeff_cls(self.mode)
 
-        cls_rz = get_rz_cls(jwHt)
-        cls_phi = get_phi_cls(jwHt)
+        cls_rz = get_rz_cls(jwHt, "H")
+        cls_phi = get_phi_cls(jwHt, "H")
             
         return cls_rz, cls_phi
 
@@ -445,8 +476,8 @@ class EM2Da_Port(EM2Da_Bdry):
 
         Et, _jwHt = get_portmode_coeff_cls(self.mode)
 
-        cls_rz = get_rz_cls(Et)
-        cls_phi = get_phi_cls(Et)
+        cls_rz = get_rz_cls(Et, "E")
+        cls_phi = get_phi_cls(Et, "E")
         
         return cls_rz, cls_phi
 

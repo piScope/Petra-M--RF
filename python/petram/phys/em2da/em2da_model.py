@@ -285,7 +285,7 @@ class EM2Da(EMPhysModule):
         elif name.startswith('rEf'):
             add_scalar(v, 'rEf', suffix, ind_vars, solr, soli)
             addc_expression(v, 'E', suffix, ind_vars,
-                            'rEf/r', ['rEf', ], 'phi')
+                            'rEf/(r+1e-12)', ['rEf', ], 'phi')
             add_components(v, 'gradrE', suffix, ind_vars, solr, soli,
                            deriv=eval_gradrEf)
         elif name.startswith('psi'):
@@ -295,13 +295,13 @@ class EM2Da(EMPhysModule):
                        'array([Er, Ephi, Ez])',
                        ['E'])
 
-        addc_expression(v, 'E', suffix, ind_vars,
-                        'rEf/r', ['rEf', ], 'phi')
+        #addc_expression(v, 'E', suffix, ind_vars,
+        #                'rEf/r', ['rEf', ], 'phi')
         addc_expression(v, 'B', suffix, ind_vars,
-                        '-1j/omega*(1j*m_mode*Ez/r-gradrEz/r)',
+                        '-1j/omega*(1j*m_mode*Ez/(r+1e-12)-gradrEz/(r+1e-12))',
                         ['m_mode', 'E', 'omega'], 0)
         addc_expression(v, 'B', suffix, ind_vars,
-                        '-1j/omega*(-1j*m_mode*Er/r+gradrEr/r)',
+                        '-1j/omega*(-1j*m_mode*Er/(r+1e-12)+gradrEr/(r+1e-12))',
                         ['m_mode', 'E', 'omega'], 1)
         add_expression(v, 'B', suffix, ind_vars,
                        'array([Br, Bphi, Bz])',
