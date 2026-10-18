@@ -28,7 +28,7 @@ else:
     import mfem.ser as mfem
 
 
-data = (('t_mode', VtableElement('t_mode', type='float',
+data = (('t_mode', VtableElement('t_mode', type='int',
                                  guilabel = 'm',
                                  default = 0.0, 
                                  tip = "mode number" )),)
@@ -45,7 +45,6 @@ class EM2Da_Axis(EM2Da_Bdry):
         if kfes > 2:
             return
         return self._sel_index
-
     def apply_essential(self, engine, gf, real=False, kfes=0):
         if kfes > 1:
             return

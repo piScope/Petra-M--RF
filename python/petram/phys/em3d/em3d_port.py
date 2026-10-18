@@ -25,7 +25,7 @@ dprint1, dprint2, dprint3 = debug.init_dprints('EM3D_Port')
 if use_parallel:
     import mfem.par as mfem
     from mfem.common.mpi_debug import nicePrint
-
+    from petram.helper.mpi_recipes import *
 else:
     import mfem.ser as mfem
     nicePrint = dprint1
