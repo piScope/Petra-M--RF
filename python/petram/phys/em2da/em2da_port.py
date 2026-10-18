@@ -216,16 +216,17 @@ def get_rz_cls(basecls, mode="H"):
                 self.base = basecls(3, *args[1:], **kwags) 
                 bdr = args[1]
                 self.norm = np.array((bdr.norm[0], 0.0, bdr.norm[1]))
+                #print(self.norm)
                 mfem.VectorPyCoefficient.__init__(self, args[0])
 
             def EvalValue(self, x):
                 xx = np.array((x[0], 0, x[1]))
                 val = self.base.EvalValue(xx)
-                print("r, z component", self.norm, x[0], val[0], val[2])
+                #print("r, z component", self.norm, x[0], val[0], val[2])
                 val = np.cross(self.norm, val)
                 return x[0]*val[0], x[0]*val[2]
                 #return val[0], val[2]
-    else:
+    elif mode == "E":  # grid function
         class cls_rz(mfem.VectorPyCoefficient):
             def __init__(self, *args, **kwags):
                 self.base = basecls(3, *args[1:], **kwags) 
@@ -234,28 +235,41 @@ def get_rz_cls(basecls, mode="H"):
             def EvalValue(self, x):
                 xx = np.array((x[0], 0, x[1]))
                 val = self.base.EvalValue(xx)
-                print("r, z component", x[0], val[0], val[2])
+                #print("r, z component", x[0], val[0], val[2])
                 return val[0], val[2]
+                #return x[0]*val[0], x[0]*val[2]
+    else: # mode == "Etest"  
+        class cls_rz(mfem.VectorPyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args[1:], **kwags) 
+                mfem.VectorPyCoefficient.__init__(self, args[0])
+
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                #print("r, z component", x[0], val[0], val[2])
+                #return val[0], val[2]
+                return x[0]*val[0], x[0]*val[2]
         
     return cls_rz
 
 def get_phi_cls(basecls, mode="H"):
     # use 3D version of port mode behind. Then give r * Aphi
     if mode == "H":    
-            class cls_phi(mfem.PyCoefficient):
-                def __init__(self, *args, **kwags):
-                    self.base = basecls(3, *args, **kwags) 
-                    bdr = args[0]
-                    self.norm = np.array((bdr.norm[0], 0.0, bdr.norm[1]))
-                    mfem.PyCoefficient.__init__(self)            
+        class cls_phi(mfem.PyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args, **kwags) 
+                bdr = args[0]
+                self.norm = np.array((bdr.norm[0], 0.0, bdr.norm[1]))
+                mfem.PyCoefficient.__init__(self)            
 
-                def EvalValue(self, x):
-                    xx = np.array((x[0], 0, x[1]))
-                    val = self.base.EvalValue(xx)
-                    val = np.cross(self.norm, val)                    
-                    print("phi component", x[0], val[1])
-                    return val[1]
-    else:
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                val = np.cross(self.norm, val)                    
+                #print("phi component", x[0], val[1])
+                return val[1]
+    elif mode == "E":  # grid function
         class cls_phi(mfem.PyCoefficient):
             def __init__(self, *args, **kwags):
                 self.base = basecls(3, *args, **kwags) 
@@ -264,8 +278,19 @@ def get_phi_cls(basecls, mode="H"):
             def EvalValue(self, x):
                 xx = np.array((x[0], 0, x[1]))
                 val = self.base.EvalValue(xx)
-                print("phi component", x[0], x[0]*val[1])
                 return x[0]*val[1]
+            
+    else:  #mode == "Etest":
+        class cls_phi(mfem.PyCoefficient):
+            def __init__(self, *args, **kwags):
+                self.base = basecls(3, *args, **kwags) 
+                mfem.PyCoefficient.__init__(self)            
+
+            def EvalValue(self, x):
+                xx = np.array((x[0], 0, x[1]))
+                val = self.base.EvalValue(xx)
+                #return x[0]*val[1]
+                return val[1]
 
     return cls_phi
 
@@ -445,18 +470,22 @@ class EM2Da_Port(EM2Da_Bdry):
             # coax port is 
             assert zc == zmin, "Port should be horizontal edge"
             assert zc == zmax, "Port should be horizontal edge"
-
+            
             self.a = rmin
             self.b = rmax
             self.ctr = np.array((0., 0., zc))
             self.ax1 = np.array((1., 0., 0.))
-            self.ax2 = np.array((0., 1., 0.))                               
+
+            norm = np.array((self.norm[0], 0, self.norm[1]))
+            self.ax2 = np.cross(norm, self.ax1)
             
         elif self.mode == 'Circular(TE)':
             self.a = rmax
             self.ctr = np.array((0., 0., zc))
             self.ax1 = np.array((1., 0., 0.))
-            self.ax2 = np.array((0., 1., 0.))                               
+
+            norm = np.array((self.norm[0], 0, self.norm[1]))            
+            self.ax2 = np.cross(norm, self.ax1)
         else:
             assert False, "unknown mode"                                
 
@@ -478,6 +507,16 @@ class EM2Da_Port(EM2Da_Bdry):
 
         cls_rz = get_rz_cls(Et, "E")
         cls_phi = get_phi_cls(Et, "E")
+        
+        return cls_rz, cls_phi
+    
+    def get_et_coeff_cls(self):
+        from petram.phys.common.rf_portmode import get_portmode_coeff_cls
+
+        Et, _jwHt = get_portmode_coeff_cls(self.mode)
+
+        cls_rz = get_rz_cls(Et, "Etest")
+        cls_phi = get_phi_cls(Et, "Etest")
         
         return cls_rz, cls_phi
 
@@ -543,18 +582,19 @@ class EM2Da_Port(EM2Da_Bdry):
         '''
         default DoF name
         '''
+        name = self.get_root_phys().dep_vars[0] + self.get_root_phys().dep_vars[1]
         if kfes == 0:
-            return self.get_root_phys().dep_vars[0]+"_port"+str(self.port_idx)            
-        elif kfes == 1:
-            return self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx)
+            return name+"_port"+str(self.port_idx)            
+        else:
+            return name+"_port"+str(self.port_idx)
 
         assert False, "should not come here"
 
     def get_probes(self):
         if self.fixed_total_field:
             return []
-        return [self.get_root_phys().dep_vars[0]+"_port"+str(self.port_idx), 
-                self.get_root_phys().dep_vars[1]+"_port"+str(self.port_idx), ]
+        name = self.get_root_phys().dep_vars[0] + self.get_root_phys().dep_vars[1]        
+        return [name+"_port"+str(self.port_idx), ]                
 
     def postprocess_extra(self, sol, flag, sol_extra):
         if self.fixed_total_field:
@@ -576,17 +616,16 @@ class EM2Da_Port(EM2Da_Bdry):
         self.vt.preprocess_params(self)
         inc_amp, inc_phase, eps, mur = self.vt.make_value_or_expression(self)
 
-        Erz, Ephi = self.get_e_coeff_cls()
+        #Erz, Ephi = self.get_e_coeff_cls()
         Hrz, Hphi = self.get_h_coeff_cls()
+        #coeffs = (Erz, Ephi, Hrz, Hphi)
         cnorm = self.get_root_phys().get_coeff_norm()
 
         if kfes == 0:
             lf1 = engine.new_lf(fes)
             Ht = Hrz(2, self, real=True, eps=eps, mur=mur, cnorm=cnorm,
                      m=self.mn[0], n=self.mn[1]) 
-
-            print(Ht)           
-            print(isinstance(Ht, mfem.VectorCoefficient))
+            
             Ht = self.restrict_coeff(Ht, engine, vec = True)
             intg =  mfem.VectorFEDomainLFIntegrator(Ht)
             #intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht)
@@ -601,62 +640,30 @@ class EM2Da_Port(EM2Da_Bdry):
             #intg = mfem.VectorFEBoundaryTangentLFIntegrator(Ht)
             lf1i.AddBoundaryIntegrator(intg)
             lf1i.Assemble()
-
-            lf2r = engine.new_lf(fes)
-            Etr = Erz(2, self, real=True, eps=eps, mur=mur,
-                      m=self.mn[0], n=self.mn[1])
-            Etr = self.restrict_coeff(Etr, engine, vec=True)
-            intg = mfem.VectorFEDomainLFIntegrator(Etr)
-            lf2r.AddBoundaryIntegrator(intg)
-            lf2r.Assemble()
-
-            lf2i = engine.new_lf(fes)
-            Eti = Erz(2, self, real=False, eps=eps, mur=mur,
-                      m=self.mn[0], n=self.mn[1])
-            Eti = self.restrict_coeff(Eti, engine, vec=True)
-            intg = mfem.VectorFEDomainLFIntegrator(Eti)
-            lf2i.AddBoundaryIntegrator(intg)
-            lf2i.Assemble()
-
-            arr = self.get_restriction_array(engine)
-
-            xr = engine.new_gf(fes)
-            xr.Assign(0.0)
-            xr.ProjectBdrCoefficientTangent(Etr, arr)
-            xi = engine.new_gf(fes)
-            xi.Assign(0.0)
-            xi.ProjectBdrCoefficientTangent(Eti, arr)
-
-            # transfer x and lf2 to True DoF space to evaluate inner-product
-            et = engine.x2X(xr).GetDataArray() + \
-                   1j * engine.x2X(xi).GetDataArray()
-            vec = engine.b2B(lf2r).GetDataArray() -  \
-                   1j * engine.b2B(lf2i).GetDataArray() # complex conjugate
-            weight = np.sum(et.dot(vec))
-            if use_parallel:
-                weight = np.sum(allgather(weight))
                 
             t1 = LF2PyVec(lf1, lf1i)
-            #v1 *= -1
+            #t1 *= -1
             t1 = PyVec2PyMat(t1)
 
-            lf2i *= -1 # complex conjugate
-            t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
-            t2 *= -1. / weight
-            t2 = PyVec2PyMat(t2.transpose())
-            t2 = t2.transpose()
+            t2 = self._get_t2(engine, eps, mur, kfes)
 
-            t3 = IdentityPyMat(1)
+            #lf2i *= -1 # complex conjugate
+            #t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
+            #t2 *= -1. / weight
+            #t2 = PyVec2PyMat(t2.transpose())
+            #t2 = t2.transpose()
+            #t3 = IdentityPyMat(1)
 
-            inc_wave = inc_amp * np.exp(1j * inc_phase / 180. * np.pi)
-            phase = np.angle(inc_wave) * 180 / np.pi
-            amp = np.sqrt(np.abs(inc_wave))
+            #inc_wave = inc_amp * np.exp(1j * inc_phase / 180. * np.pi)
+            #phase = np.angle(inc_wave) * 180 / np.pi
+            #amp = np.sqrt(np.abs(inc_wave))
 
-            t4 = -np.array(
-                         [[amp * np.exp(1j * phase / 180. * np.pi)]])
-            t4 = Array2PyVec(t4)
+            # t4 = -np.array(
+            #             [[amp * np.exp(1j * phase / 180. * np.pi)]])
+            #t4 = Array2PyVec(t4)
 
-            return (t1, t2, t3, t4, True)
+            return (t1, t2, None, None, False)
+            #return (None, t2, None, None, False)
 
         elif kfes == 1:
 
@@ -676,51 +683,19 @@ class EM2Da_Port(EM2Da_Bdry):
             lf1i.AddBoundaryIntegrator(intg)
             lf1i.Assemble()
 
-            lf2r = engine.new_lf(fes)
-            Etr = Ephi(self, real=True, eps=eps, mur=mur,
-                       m=self.mn[0], n=self.mn[1])
-            Etr = self.restrict_coeff(Etr, engine)
-            intg = mfem.BoundaryLFIntegrator(Etr)
-            lf2r.AddBoundaryIntegrator(intg)
-            lf2r.Assemble()
-
-            lf2i = engine.new_lf(fes)
-            Eti = Ephi(self, real=False, eps=eps, mur=mur,
-                       m=self.mn[0], n=self.mn[1])
-            Eti = self.restrict_coeff(Eti, engine)
-            intg = mfem.BoundaryLFIntegrator(Eti)
-            lf2i.AddBoundaryIntegrator(intg)
-            lf2i.Assemble()
-
-            arr = self.get_restriction_array(engine)
-
-            xr = engine.new_gf(fes)
-            xr.Assign(0.0)
-            xr.ProjectBdrCoefficient(Etr, arr)
-            xi = engine.new_gf(fes)
-            xi.Assign(0.0)
-            xi.ProjectBdrCoefficient(Eti, arr)
-
-            # transfer x and lf2 to True DoF space to evaluate inner-product
-            et = engine.x2X(xr).GetDataArray() + \
-                   1j * engine.x2X(xi).GetDataArray()
-            vec = engine.b2B(lf2r).GetDataArray() -  \
-                   1j * engine.b2B(lf2i).GetDataArray() # complex conjugate
-            weight = np.sum(et.dot(vec))
-            if use_parallel:
-                weight = np.sum(allgather(weight))
-
             t1 = LF2PyVec(lf1, lf1i)
-            #v1 *= -1
+            #t1 *= -1
             t1 = PyVec2PyMat(t1)
 
-            lf2i *= -1 # complex conjugate
-            t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
-            t2 *= -1. / weight
-            t2 = PyVec2PyMat(t2.transpose())
-            t2 = t2.transpose()
+            t2 = self._get_t2(engine, eps, mur, kfes)
+            #lf2i *= -1 # complex conjugate
+            #t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
+            #t2 *= -1. / weight
+            #t2 = PyVec2PyMat(t2.transpose())
+            #t2 = t2.transpose()
 
             t3 = IdentityPyMat(1)
+            #t3 = IdentityPyMat(1, diag=-1)
 
             inc_wave = inc_amp * np.exp(1j * inc_phase / 180. * np.pi)
             phase = np.angle(inc_wave) * 180 / np.pi
@@ -728,48 +703,124 @@ class EM2Da_Port(EM2Da_Bdry):
 
             t4 = -np.array(
                          [[amp * np.exp(1j * phase / 180. * np.pi)]])
+            #t4 = np.array([0.])
             t4 = Array2PyVec(t4)
-
+          
             return (t1, t2, t3, t4, True)
+            #return (None, t2, t3, t4, True)
+        
+    def _get_t2(self, engine, eps, mur, kfes):
+        # Get the transfer matrix t2 for the given kfes (0 or 1)
+        # Since weight are computed from both kfes = 0 and kfes = 1
+        # and summed, we need to handle them together.
 
-            '''
-            v1 = LF2PyVec(lf1, lf1i)
-            #v1 *= -1
+        from mfem.common.chypre import (LF2PyVec,
+                                        PyVec2PyMat)
+                                        
+        fes0 = engine.get_fes(self.get_root_phys(), 0)            
+        fes1 = engine.get_fes(self.get_root_phys(), 1)                    
+        rarr = self.get_restriction_array(engine)
+        Erz, Ephi = self.get_e_coeff_cls()
+        Erzt, Ephit = self.get_et_coeff_cls()
+        #
+        #  kfes = 0 
+        # 
+        Etr0 = Erz(2, self, real=True, eps=eps, mur=mur,
+                      m=self.mn[0], n=self.mn[1])
+        Eti0 = Erz(2, self, real=False, eps=eps, mur=mur,
+                  m=self.mn[0], n=self.mn[1])
+        Etrt0 = Erzt(2, self, real=True, eps=eps, mur=mur,
+                      m=self.mn[0], n=self.mn[1])
+        Etit0 = Erzt(2, self, real=False, eps=eps, mur=mur,
+                  m=self.mn[0], n=self.mn[1])
 
-            lf2 = engine.new_lf(fes)
-            Et = Ephi(self, real=True, eps=eps, mur=mur)
-            Et = self.restrict_coeff(Et, engine)
-            intg = mfem.DomainLFIntegrator(Et)
-            lf2.AddBoundaryIntegrator(intg)
-            lf2.Assemble()
+        Etr0 = self.restrict_coeff(Etr0, engine, vec=True)        
+        Eti0 = self.restrict_coeff(Eti0, engine, vec=True)
+        Etrt0 = self.restrict_coeff(Etrt0, engine, vec=True)        
+        Etit0 = self.restrict_coeff(Etit0, engine, vec=True)
 
-            x = engine.new_gf(fes)
-            x.Assign(0.0)
-            arr = self.get_restriction_array(engine)
-            x.ProjectBdrCoefficient(Et, arr)
+        lf2r = engine.new_lf(fes0)
+        intg = mfem.VectorFEDomainLFIntegrator(Etrt0)
+        lf2r.AddBoundaryIntegrator(intg)
+        lf2r.Assemble()
 
-            weight = mfem.InnerProduct(engine.x2X(x), engine.b2B(lf2))
-            v2 = LF2PyVec(lf2, None, horizontal=True)
-            v2 *= -1 / weight / 2.0
+        lf2i = engine.new_lf(fes0)
+        intg = mfem.VectorFEDomainLFIntegrator(Etit0)
+        lf2i.AddBoundaryIntegrator(intg)
+        lf2i.Assemble()
 
-            #x  = LF2PyVec(x, None)
-            # output formats of InnerProduct
-            # are slightly different in parallel and serial
-            # in serial numpy returns (1,1) array, while in parallel
-            # MFEM returns a number. np.sum takes care of this.
-            #tmp = np.sum(v2.dot(x))
-            #v2 *= -1/tmp/2.
+        xr = engine.new_gf(fes0)
+        xr.Assign(0.0)
+        xr.ProjectBdrCoefficientTangent(Etr0, rarr)
+        xi = engine.new_gf(fes0)
+        xi.Assign(0.0)
+        xi.ProjectBdrCoefficientTangent(Eti0, rarr)
 
-            t4 = np.array([[inc_amp * np.exp(1j * inc_phase / 180. * np.pi)]])
+        # transfer x and lf2 to True DoF space to evaluate inner-product
+        et = engine.x2X(xr).GetDataArray() + \
+               1j * engine.x2X(xi).GetDataArray()
+        vec = engine.b2B(lf2r).GetDataArray() -  \
+               1j * engine.b2B(lf2i).GetDataArray() # complex conjugate
+        weight0 = np.sum(et.dot(vec))
+        if use_parallel:
+            weight0 = np.sum(allgather(weight0))
 
-            # convert to a matrix form
-            v1 = PyVec2PyMat(v1)
-            v2 = PyVec2PyMat(v2.transpose())
-            t4 = Array2PyVec(t4)
-            t3 = IdentityPyMat(1, diag=-1)
+        if kfes == 0:
+            lf2i *= -1 # complex conjugate
+            t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
+        #
+        #  kfes = 1
+        #
+        Ephir1 = Ephi(self, real=True, eps=eps, mur=mur,
+                    m=self.mn[0], n=self.mn[1])
+        Ephii1 = Ephi(self, real=False, eps=eps, mur=mur,
+                   m=self.mn[0], n=self.mn[1])
+        Ephirt1 = Ephit(self, real=True, eps=eps, mur=mur,
+                    m=self.mn[0], n=self.mn[1])
+        Ephiit1 = Ephit(self, real=False, eps=eps, mur=mur,
+                   m=self.mn[0], n=self.mn[1])
+        
+        Ephir1 = self.restrict_coeff(Ephir1, engine)
+        Ephii1 = self.restrict_coeff(Ephii1, engine)
+        Ephirt1 = self.restrict_coeff(Ephirt1, engine)
+        Ephiit1 = self.restrict_coeff(Ephiit1, engine)
 
-            v2 = v2.transpose()
+        lf2r = engine.new_lf(fes1)
+        intg = mfem.BoundaryLFIntegrator(Ephirt1)
+        lf2r.AddBoundaryIntegrator(intg)
+        lf2r.Assemble()
 
-            # return (None, v2, t3, t4, True)
-            return (v1, v2, t3, t4, True)
-            '''
+        lf2i = engine.new_lf(fes1)
+        intg = mfem.BoundaryLFIntegrator(Ephiit1)
+        lf2i.AddBoundaryIntegrator(intg)
+        lf2i.Assemble()            
+
+        xr = engine.new_gf(fes1)
+        xr.Assign(0.0)
+        xr.ProjectBdrCoefficient(Ephir1, rarr)
+        xi = engine.new_gf(fes1)
+        xi.Assign(0.0)
+        xi.ProjectBdrCoefficient(Ephii1, rarr)
+
+        # transfer x and lf2 to True DoF space to evaluate inner-product
+        et = engine.x2X(xr).GetDataArray() + \
+               1j * engine.x2X(xi).GetDataArray()
+        vec = engine.b2B(lf2r).GetDataArray() -  \
+               1j * engine.b2B(lf2i).GetDataArray() # complex conjugate
+        weight1 = np.sum(et.dot(vec))
+        if use_parallel:
+            weight1 = np.sum(allgather(weight1))
+
+        if kfes == 1:
+            lf2i *= -1 # complex conjugate
+            t2 = LF2PyVec(lf2r, lf2i, horizontal=True)
+
+        print("weight0 =", weight0, "weight1 =", weight1)
+        weight = weight0 + weight1
+
+        t2 *= -1. / weight
+        t2 = PyVec2PyMat(t2.transpose())
+        t2 = t2.transpose()
+
+        return t2
+
