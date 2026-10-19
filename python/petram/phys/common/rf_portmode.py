@@ -46,6 +46,7 @@ else:
 '''
 port_modes = ["TE", "TEM", "Coax(TEM)", "Circular(TE)"]
 
+
 def get_portmode_coeff_cls(mode):
     if mode == 'TEM':
         return C_Et_TEM, C_jwHt_TEM
@@ -59,9 +60,11 @@ def get_portmode_coeff_cls(mode):
         raise NotImplementedError(
             "you must implement this mode")
 
+
 '''
    rectangular wg TE
 '''
+
 
 def TE_norm(m, n, a, b, alpha, gamma):
     if m == 0:
@@ -282,12 +285,20 @@ class C_jwHt_CoaxTEM(mfem.VectorPyCoefficient):
 '''
 
 
-def circular_norm():
-    # ToDo
-    return 1.0
+def circular_norm(a, mu, kg, kc, m, xzero, omega):
+    # mu :  mu0*mur
+    from scipy.special import jv
+    power = pi * a**2 * omega * mu * kg * \
+        (1 - m**2/xzero**2)*jv(m, xzero)**2 / 2/kc**2
+    fac = 1j*kc**2/omega/mu
+    norm = 1/sqrt(abs(power*fac*fac))
+    return norm
 
 
 class C_CircularTE(mfem.VectorPyCoefficient):
+    #
+    # . See Petra-M manual appendix.
+    # .   here we multiply 1j*k_c^2/omega/mu to the expression in the note.
     def __init__(self, sdim, bdry, real=True, eps=1.0, mur=1.0, amp=1.0, phase=0.0, cnorm=1.0,
                  m=0, n=1):
         mfem.VectorPyCoefficient.__init__(self, sdim)
@@ -303,6 +314,8 @@ class C_CircularTE(mfem.VectorPyCoefficient):
         self.norm = bdry.norm
         self.cnorm = cnorm
         self.phase = phase
+        self.mur = mur
+        self.eps = eps
 
         self.amp = amp
 
@@ -319,8 +332,10 @@ class C_CircularTE(mfem.VectorPyCoefficient):
 
         self.kg = sqrt(k**2-kc**2)
         self.kc = kc
-        #print("kc", self.kc)
-        self.AA = circular_norm() * amp * exp(1j*phase*pi/180.)
+        # print("kc", self.kc)
+        norm = circular_norm(self.a, mu0*mur,
+                             self.kg, self.kc, self.m, xzero, self.omega)
+        self.AA = norm * amp * exp(1j*phase*pi/180.)
 
     def compute_jv_x(self, rr):
         from scipy.special import jv
@@ -334,7 +349,8 @@ class C_CircularTE(mfem.VectorPyCoefficient):
             if x < 0.001:
                 jv_x = 0
                 for i in range(5):
-                  jv_x += (-1)**i /factorial(i)/factorial(m+i) *x**(2*i + m-1)/2**(2*i + m)
+                    jv_x += (-1)**i / factorial(i)/factorial(m+i) * \
+                        x**(2*i + m-1)/2**(2*i + m)
             else:
                 jv_x = jv(m, x)/x
             jv_x = jv_x*kc
@@ -344,6 +360,7 @@ class C_CircularTE(mfem.VectorPyCoefficient):
         if m < 0:
             jv_x*(-1)**m
         return jv_x
+
 
 class C_Et_CircularTE(C_CircularTE):
     def EvalValue(self, x):
@@ -357,14 +374,13 @@ class C_Et_CircularTE(C_CircularTE):
         jv_x = self.compute_jv_x(rr)
 
         from scipy.special import jvp
-        
+
         if self.m > 0:
             Er = self.m * jv_x*exp(1j*self.m*th-1j*pi/2)
         else:
             Er = self.m * jv_x*exp(1j*self.m*th-1j*pi/2)*(-1)**self.m
 
         Et = self.kc*jvp(self.m, rr*self.kc)*exp(1j*self.m*th)
-
 
         E = (Er*nr + Et*nt) * self.AA
 
@@ -389,18 +405,19 @@ class C_jwHt_CircularTE(C_CircularTE):
 
         # Hr = -self.kg*self.kc/self.omega*jvp(self.m, rr*self.kc)*cos(self.m*th)
         # Ht =  self.kg*self.m/self.omega/rr*jv(self.m, rr*self.kc)*sin(self.m*th)
-        Hr = self.kg*self.kc/self.omega * \
+        Hr = -self.kg*self.kc/self.omega * \
             jvp(self.m, rr*self.kc)*exp(1j*self.m*th)
-        #Ht = self.kg*self.m/self.omega/rr * \
+        # Ht = self.kg*self.m/self.omega/rr * \
         #    jv(self.m, rr*self.kc)*exp(1j*self.m*th)
         if self.m >= 0:
-            Ht = -self.kg*self.m/self.omega*jv_x*exp(1j*self.m*th-1j*pi/2)
+            Ht = -1j*self.kg*self.m/self.omega*jv_x*exp(1j*self.m*th)
         else:
-            Ht = -self.kg*self.m/self.omega*jv_x*exp(1j*self.m*th-1j*pi/2)*(-1)**self.m
+            Ht = -1j*self.kg*self.m/self.omega * \
+                jv_x*exp(1j*self.m*th)*(-1)**self.m
 
-        H = 1j*self.omega*(Hr*nr + Ht*nt) * self.AA*self.cnorm /mu0
+        H = 1j*self.omega*(Hr*nr + Ht*nt) * self.AA*self.cnorm / mu0/self.mur
 
         if self.real:
-            return -H.real
+            return H.real
         else:
-            return -H.imag
+            return H.imag
